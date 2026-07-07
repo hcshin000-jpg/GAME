@@ -911,7 +911,10 @@
 
     function retreatAfterDefeat() {
       const oldStage = state.stage;
-      state.stage = Math.max(1, state.stage - 1);
+      const wasRepeating = state.repeatMode;
+      if (!wasRepeating) {
+        state.stage = Math.max(1, state.stage - 1);
+      }
       state.monstersDefeated = 0;
       state.stageCleared = false;
       state.repeatMode = true;
@@ -919,7 +922,11 @@
       state.playerHp = playerMaxHp();
       state.monster = makeMonster();
       state.lastMonsterAttack = performance.now();
-      addLog("체력이 모두 떨어져 <b>" + oldStage + "단계</b>에서 후퇴했습니다. 이제 <b>" + state.stage + "단계</b>를 반복합니다.");
+      if (wasRepeating) {
+        addLog("체력이 모두 떨어졌지만 반복 모드라 <b>" + state.stage + "단계</b>를 유지합니다.");
+      } else {
+        addLog("체력이 모두 떨어져 <b>" + oldStage + "단계</b>에서 후퇴했습니다. 이제 <b>" + state.stage + "단계</b>를 반복합니다.");
+      }
       showToast(state.stage + "단계 반복 모드");
       saveGame();
       updateUI();
