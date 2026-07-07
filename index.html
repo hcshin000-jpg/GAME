@@ -673,7 +673,12 @@
       { name: "동굴 박쥐", color: "#a87cff", shape: "bat" },
       { name: "철갑 멧돼지", color: "#c49b65", shape: "boar" },
       { name: "불꽃 골렘", color: "#ff7e50", shape: "golem" },
-      { name: "심연 기사", color: "#7aa8ff", shape: "knight" }
+      { name: "심연 기사", color: "#7aa8ff", shape: "knight" },
+      { name: "독침 맨티스", color: "#9de06a", shape: "mantis" },
+      { name: "서리 와이번", color: "#8fd6ff", shape: "wyvern" },
+      { name: "묘지 해골병", color: "#d8d1bd", shape: "skeleton" },
+      { name: "늪지 촉수괴", color: "#65c6a5", shape: "tentacle" },
+      { name: "암흑 사냥개", color: "#8f6cff", shape: "hound" }
     ];
 
     const state = {
@@ -810,7 +815,7 @@
       const roll = 0.88 + Math.random() * 0.24;
       const damage = Math.floor(baseDamage() * roll * (crit ? 2.05 : 1));
       state.monster.hp = Math.max(0, state.monster.hp - damage);
-      state.slashTimer = 150;
+      state.slashTimer = 240;
       state.monsterHitTimer = 120;
       addFloating((crit ? "치명 " : "") + formatNumber(damage), canvas.width * 0.62, canvas.height * 0.37, crit ? "#f7c948" : "#f2f5f7");
       addSparks(canvas.width * 0.61, canvas.height * 0.45, crit ? "#f7c948" : currentWeapon().color, crit ? 16 : 9);
@@ -1138,7 +1143,8 @@
       const y = h * 0.61 + Math.sin(t * 0.004) * 4;
       const hitOffset = state.playerHitTimer > 0 ? Math.sin(t * 0.08) * 6 : 0;
       const weapon = currentWeapon();
-      const swing = state.slashTimer > 0 ? Math.sin((150 - state.slashTimer) / 150 * Math.PI) : 0;
+      const swingProgress = state.slashTimer > 0 ? 1 - state.slashTimer / 240 : 0;
+      const swing = state.slashTimer > 0 ? Math.sin(swingProgress * Math.PI) : 0;
       const armor = ctx.createLinearGradient(-u * 0.04, -u * 0.14, u * 0.07, u * 0.12);
       armor.addColorStop(0, "#f6fbff");
       armor.addColorStop(0.45, "#8398ad");
@@ -1243,37 +1249,66 @@
       ctx.fillStyle = "#76d8ff";
       ctx.fillRect(u * 0.005, -u * 0.095, u * 0.018, u * 0.006);
 
+      const handX = u * 0.072;
+      const handY = u * 0.008;
+      const swordAngle = state.slashTimer > 0 ? -1.42 + swingProgress * 2.25 : -0.92;
+      const hiltX = handX + Math.cos(swordAngle) * u * 0.045;
+      const hiltY = handY + Math.sin(swordAngle) * u * 0.045;
+      const tipX = handX + Math.cos(swordAngle) * u * 0.30;
+      const tipY = handY + Math.sin(swordAngle) * u * 0.30;
+      const guardAngle = swordAngle + Math.PI / 2;
+
       ctx.strokeStyle = "#1b2430";
       ctx.lineWidth = Math.max(8, u * 0.024);
       ctx.beginPath();
-      ctx.moveTo(u * 0.055, u * 0.01);
-      ctx.lineTo(u * 0.13 + swing * u * 0.04, -u * 0.02 - swing * u * 0.035);
-      ctx.stroke();
-
-      const bladeGlow = ctx.createLinearGradient(u * 0.09, u * 0.02, u * 0.26, -u * 0.20);
-      bladeGlow.addColorStop(0, "#f8fbff");
-      bladeGlow.addColorStop(0.55, weapon.color);
-      bladeGlow.addColorStop(1, "#ffffff");
-      ctx.strokeStyle = bladeGlow;
-      ctx.lineWidth = Math.max(6, u * 0.015);
-      ctx.beginPath();
-      ctx.moveTo(u * 0.105, -u * 0.015);
-      ctx.lineTo(u * 0.245 + swing * u * 0.075, -u * 0.17 - swing * u * 0.075);
+      ctx.moveTo(u * 0.045, u * 0.015);
+      ctx.lineTo(handX, handY);
       ctx.stroke();
 
       if (state.slashTimer > 0) {
-        ctx.globalAlpha = 0.55;
+        ctx.globalAlpha = 0.32 + swing * 0.36;
         ctx.strokeStyle = weapon.color;
+        ctx.lineWidth = Math.max(9, u * 0.027);
+        ctx.beginPath();
+        ctx.arc(handX, handY, u * 0.245, -1.55, swordAngle + 0.3);
+        ctx.stroke();
+        ctx.globalAlpha = 0.18 + swing * 0.2;
+        ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = Math.max(3, u * 0.01);
         ctx.beginPath();
-        ctx.arc(u * 0.11, -u * 0.045, u * (0.16 + swing * 0.055), -0.85, 0.55);
+        ctx.arc(handX, handY, u * 0.205, -1.35, swordAngle + 0.16);
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
 
+      ctx.strokeStyle = "#2d1d15";
+      ctx.lineWidth = Math.max(5, u * 0.013);
+      ctx.beginPath();
+      ctx.moveTo(handX, handY);
+      ctx.lineTo(hiltX, hiltY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#d6b45a";
+      ctx.lineWidth = Math.max(3, u * 0.009);
+      ctx.beginPath();
+      ctx.moveTo(hiltX + Math.cos(guardAngle) * u * 0.032, hiltY + Math.sin(guardAngle) * u * 0.032);
+      ctx.lineTo(hiltX - Math.cos(guardAngle) * u * 0.032, hiltY - Math.sin(guardAngle) * u * 0.032);
+      ctx.stroke();
+
+      const bladeGlow = ctx.createLinearGradient(hiltX, hiltY, tipX, tipY);
+      bladeGlow.addColorStop(0, "#f8fbff");
+      bladeGlow.addColorStop(0.55, weapon.color);
+      bladeGlow.addColorStop(1, "#ffffff");
+      ctx.strokeStyle = bladeGlow;
+      ctx.lineWidth = Math.max(7, u * 0.018);
+      ctx.beginPath();
+      ctx.moveTo(hiltX, hiltY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
       ctx.fillStyle = weapon.color;
       ctx.beginPath();
-      ctx.arc(u * 0.245 + swing * u * 0.075, -u * 0.17 - swing * u * 0.075, u * 0.011, 0, Math.PI * 2);
+      ctx.arc(tipX, tipY, u * 0.011, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -1428,21 +1463,217 @@
         ctx.stroke();
         ctx.fillStyle = "#ffd37a";
         ctx.fillRect(-u * 0.055, -u * 0.052, u * 0.11, u * 0.024);
-      } else {
-        ctx.fillStyle = "#1a2230";
+      } else if (monster.shape === "mantis") {
+        ctx.fillStyle = "#244726";
         ctx.beginPath();
-        ctx.moveTo(-u * 0.095, u * 0.115);
-        ctx.lineTo(-u * 0.075, -u * 0.095);
-        ctx.lineTo(-u * 0.025, -u * 0.155);
-        ctx.lineTo(u * 0.03, -u * 0.155);
-        ctx.lineTo(u * 0.085, -u * 0.092);
-        ctx.lineTo(u * 0.105, u * 0.115);
+        ctx.moveTo(-u * 0.035, -u * 0.115);
+        ctx.lineTo(u * 0.115, -u * 0.055);
+        ctx.lineTo(u * 0.065, u * 0.095);
+        ctx.lineTo(-u * 0.09, u * 0.082);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = monster.color;
         ctx.beginPath();
-        ctx.roundRect(-u * 0.07, -u * 0.055, u * 0.145, u * 0.15, u * 0.018);
+        ctx.moveTo(-u * 0.115, -u * 0.02);
+        ctx.lineTo(-u * 0.03, -u * 0.14);
+        ctx.lineTo(u * 0.02, -u * 0.055);
+        ctx.lineTo(-u * 0.045, u * 0.055);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "#d9ffb0";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.045, -u * 0.025);
+        ctx.lineTo(-u * 0.215, -u * 0.105);
+        ctx.lineTo(-u * 0.13, u * 0.02);
+        ctx.moveTo(u * 0.04, -u * 0.035);
+        ctx.lineTo(u * 0.21, -u * 0.12);
+        ctx.lineTo(u * 0.135, u * 0.025);
+        ctx.stroke();
+        ctx.strokeStyle = "#1b351c";
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.035, u * 0.07);
+        ctx.lineTo(-u * 0.115, u * 0.16);
+        ctx.moveTo(u * 0.045, u * 0.075);
+        ctx.lineTo(u * 0.125, u * 0.155);
+        ctx.stroke();
+        ctx.fillStyle = "#101a10";
+        ctx.beginPath();
+        ctx.ellipse(-u * 0.03, -u * 0.07, u * 0.012, u * 0.022, -0.35, 0, Math.PI * 2);
+        ctx.ellipse(u * 0.025, -u * 0.064, u * 0.012, u * 0.022, 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "wyvern") {
+        ctx.fillStyle = "#20354f";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.025, -u * 0.02);
+        ctx.lineTo(-u * 0.19, -u * 0.16);
+        ctx.lineTo(-u * 0.15, u * 0.045);
+        ctx.lineTo(-u * 0.055, u * 0.035);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(u * 0.025, -u * 0.02);
+        ctx.lineTo(u * 0.19, -u * 0.16);
+        ctx.lineTo(u * 0.15, u * 0.045);
+        ctx.lineTo(u * 0.055, u * 0.035);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.085, u * 0.075);
+        ctx.quadraticCurveTo(-u * 0.045, -u * 0.105, u * 0.09, -u * 0.09);
+        ctx.lineTo(u * 0.16, -u * 0.025);
+        ctx.lineTo(u * 0.085, u * 0.045);
+        ctx.quadraticCurveTo(0, u * 0.12, -u * 0.085, u * 0.075);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "#d9f7ff";
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(u * 0.105, -u * 0.078);
+        ctx.lineTo(u * 0.175, -u * 0.14);
+        ctx.moveTo(u * 0.117, -u * 0.055);
+        ctx.lineTo(u * 0.19, -u * 0.045);
+        ctx.moveTo(-u * 0.055, u * 0.065);
+        ctx.quadraticCurveTo(-u * 0.20, u * 0.13, -u * 0.245, u * 0.02);
+        ctx.stroke();
+        ctx.fillStyle = "#07131d";
+        ctx.beginPath();
+        ctx.arc(u * 0.075, -u * 0.043, u * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "skeleton") {
+        ctx.strokeStyle = "#101215";
+        ctx.lineWidth = Math.max(3, u * 0.008);
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.arc(0, -u * 0.105, u * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#1a1b1b";
+        ctx.beginPath();
+        ctx.arc(-u * 0.022, -u * 0.112, u * 0.015, 0, Math.PI * 2);
+        ctx.arc(u * 0.024, -u * 0.112, u * 0.015, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-u * 0.017, -u * 0.08, u * 0.034, u * 0.014);
+        ctx.strokeStyle = "#d8d1bd";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(0, -u * 0.045);
+        ctx.lineTo(0, u * 0.095);
+        ctx.moveTo(-u * 0.075, -u * 0.005);
+        ctx.lineTo(u * 0.075, -u * 0.005);
+        ctx.moveTo(-u * 0.06, u * 0.03);
+        ctx.lineTo(u * 0.06, u * 0.03);
+        ctx.moveTo(-u * 0.052, u * 0.065);
+        ctx.lineTo(u * 0.052, u * 0.065);
+        ctx.stroke();
+        ctx.strokeStyle = "#5b6675";
+        ctx.lineWidth = Math.max(4, u * 0.01);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.085, -u * 0.005);
+        ctx.lineTo(-u * 0.17, u * 0.095);
+        ctx.moveTo(u * 0.085, -u * 0.005);
+        ctx.lineTo(u * 0.17, u * 0.09);
+        ctx.stroke();
+      } else if (monster.shape === "tentacle") {
+        const core = ctx.createRadialGradient(-u * 0.035, -u * 0.03, u * 0.02, 0, u * 0.03, u * 0.16);
+        core.addColorStop(0, "#bffff0");
+        core.addColorStop(0.5, monster.color);
+        core.addColorStop(1, "#275a52");
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.1, u * 0.085);
+        ctx.quadraticCurveTo(-u * 0.12, -u * 0.095, u * 0.02, -u * 0.13);
+        ctx.quadraticCurveTo(u * 0.14, -u * 0.08, u * 0.12, u * 0.08);
+        ctx.quadraticCurveTo(u * 0.015, u * 0.15, -u * 0.1, u * 0.085);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "#3b8c7b";
+        ctx.lineWidth = Math.max(8, u * 0.019);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.07, u * 0.065);
+        ctx.quadraticCurveTo(-u * 0.19, u * 0.14, -u * 0.16, u * 0.215);
+        ctx.moveTo(-u * 0.015, u * 0.085);
+        ctx.quadraticCurveTo(-u * 0.06, u * 0.19, u * 0.02, u * 0.225);
+        ctx.moveTo(u * 0.055, u * 0.07);
+        ctx.quadraticCurveTo(u * 0.17, u * 0.15, u * 0.13, u * 0.225);
+        ctx.stroke();
+        ctx.fillStyle = "#f0fbff";
+        ctx.beginPath();
+        ctx.arc(u * 0.02, -u * 0.035, u * 0.046, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#121820";
+        ctx.beginPath();
+        ctx.arc(u * 0.028, -u * 0.032, u * 0.021, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "hound") {
+        ctx.fillStyle = "#17131f";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.16, u * 0.08);
+        ctx.quadraticCurveTo(-u * 0.09, -u * 0.095, u * 0.085, -u * 0.055);
+        ctx.lineTo(u * 0.165, u * 0.005);
+        ctx.lineTo(u * 0.105, u * 0.09);
+        ctx.quadraticCurveTo(-u * 0.005, u * 0.135, -u * 0.16, u * 0.08);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.065, -u * 0.045);
+        ctx.lineTo(u * 0.17, -u * 0.075);
+        ctx.lineTo(u * 0.195, -u * 0.005);
+        ctx.lineTo(u * 0.11, u * 0.045);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#0d0a12";
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-u * (0.08 - i * 0.045), -u * 0.052);
+          ctx.lineTo(-u * (0.055 - i * 0.045), -u * 0.12);
+          ctx.lineTo(-u * (0.02 - i * 0.045), -u * 0.045);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.strokeStyle = "#17131f";
+        ctx.lineWidth = Math.max(6, u * 0.014);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.095, u * 0.08);
+        ctx.lineTo(-u * 0.135, u * 0.18);
+        ctx.moveTo(u * 0.035, u * 0.075);
+        ctx.lineTo(u * 0.07, u * 0.18);
+        ctx.stroke();
+        ctx.fillStyle = "#ff615d";
+        ctx.beginPath();
+        ctx.arc(u * 0.135, -u * 0.018, u * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = "#101722";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.11, u * 0.115);
+        ctx.lineTo(-u * 0.085, -u * 0.07);
+        ctx.lineTo(-u * 0.04, -u * 0.15);
+        ctx.lineTo(u * 0.045, -u * 0.145);
+        ctx.lineTo(u * 0.09, -u * 0.065);
+        ctx.lineTo(u * 0.115, u * 0.115);
+        ctx.lineTo(u * 0.045, u * 0.15);
+        ctx.lineTo(-u * 0.04, u * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.07, -u * 0.035);
+        ctx.lineTo(0, -u * 0.085);
+        ctx.lineTo(u * 0.075, -u * 0.035);
+        ctx.lineTo(u * 0.055, u * 0.095);
+        ctx.lineTo(-u * 0.055, u * 0.095);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = "#0f141b";
@@ -1460,7 +1691,7 @@
         ctx.stroke();
       }
 
-      if (monster.shape !== "slime" && monster.shape !== "boar" && monster.shape !== "golem") {
+      if (monster.shape === "bat") {
         ctx.fillStyle = "#101215";
         ctx.beginPath();
         ctx.arc(-u * 0.032, -u * 0.02, u * 0.011, 0, Math.PI * 2);
