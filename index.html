@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>강철 원정대</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111417;
+      --panel: #1d2228;
+      --panel-2: #252b32;
+      --line: #3b4652;
+      --text: #f2f5f7;
+      --muted: #aeb8c3;
+      --gold: #f7c948;
+      --red: #ee5d5d;
+      --green: #62d892;
+      --blue: #73a9ff;
+      --ink: #0b0e11;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(115, 169, 255, 0.14), transparent 28rem),
+        radial-gradient(circle at 82% 4%, rgba(247, 201, 72, 0.12), transparent 22rem),
+        var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 24px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px 0 24px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-height: 68px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent), var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .stat strong {
+      font-size: 18px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 12px;
+      min-height: 550px;
+    }
+
+    .arena-wrap,
+    .shop,
+    .log-panel {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.045), transparent 45%), var(--panel);
+      border-radius: 8px;
+    }
+
+    .arena-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 550px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 550px;
+      cursor: crosshair;
+      background: #15191e;
+      touch-action: manipulation;
+    }
+
+    .battle-overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 14px;
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 58px;
+      gap: 8px;
+      align-items: center;
+      font-weight: 800;
+      text-shadow: 0 1px 0 #000;
+    }
+
+    .bar-label {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .bar {
+      height: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.32);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      width: 50%;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 0.16s ease;
+    }
+
+    .hp-monster {
+      background: linear-gradient(90deg, #ff7979, #e23737);
+    }
+
+    .hp-player {
+      background: linear-gradient(90deg, #62d892, #1eb96b);
+    }
+
+    .bar-value {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .stage-clear {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: min(92%, 560px);
+      display: none;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(247,201,72,0.58);
+      background: rgba(17,20,23,0.86);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stage-clear.show {
+      display: grid;
+    }
+
+    .stage-clear strong {
+      color: var(--gold);
+      font-size: 14px;
+    }
+
+    .shop {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      gap: 10px;
+      padding: 12px;
+      min-height: 550px;
+    }
+
+    .shop h2,
+    .log-panel h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .weapon-box,
+    .stat-box {
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-head {
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .stat-lines {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat-line {
+      min-height: 50px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.16);
+      border-radius: 8px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+    }
+
+    .stat-line span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .stat-line strong {
+      font-size: 15px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .weapon-name {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .mini {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .upgrades {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .upgrade {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: #20262d;
+      border-radius: 8px;
+    }
+
+    .upgrade-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-weight: 800;
+    }
+
+    .upgrade-heading {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .level-badge {
+      padding: 2px 7px;
+      border: 1px solid rgba(247,201,72,0.42);
+      background: rgba(247,201,72,0.14);
+      color: var(--gold);
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .upgrade-title span:last-child {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .btn {
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid #556270;
+      background: linear-gradient(180deg, #343d48, #252c34);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.08s ease, border-color 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.08);
+      border-color: #8290a0;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .btn.primary {
+      border-color: #e5b837;
+      background: linear-gradient(180deg, #f7c948, #b98614);
+      color: #211708;
+    }
+
+    .btn.green {
+      border-color: #45c981;
+      background: linear-gradient(180deg, #62d892, #25965b);
+      color: #06150d;
+    }
+
+    .btn.blue {
+      border-color: #73a9ff;
+      background: linear-gradient(180deg, #73a9ff, #3265b6);
+      color: #06111f;
+    }
+
+    .btn.danger {
+      border-color: #ee5d5d;
+      background: linear-gradient(180deg, #ee5d5d, #9f2929);
+      color: #fff;
+    }
+
+    .log-panel {
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .log {
+      height: 96px;
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.22);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .log p {
+      margin: 0 0 4px;
+    }
+
+    .log b {
+      color: var(--gold);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(20px);
+      max-width: min(92vw, 520px);
+      padding: 11px 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(14,17,20,0.92);
+      color: var(--text);
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 920px) {
+      .shell {
+        width: min(100% - 16px, 720px);
+        padding-top: 12px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .top-actions {
+        justify-content: start;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .game {
+        grid-template-columns: 1fr;
+      }
+
+      .arena-wrap,
+      canvas,
+      .shop {
+        min-height: 480px;
+      }
+
+      .shop {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 34px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .stat {
+        min-height: 58px;
+      }
+
+      .stage-clear {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-lines {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-row {
+        grid-template-columns: 70px 1fr 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>강철 원정대</h1>
+        <p class="subtitle">몬스터를 쓰러뜨리고 골드를 벌어 무기를 강화한 뒤 더 높은 단계로 진입하세요.</p>
+      </div>
+      <div class="top-actions">
+        <button id="saveBtn" class="btn blue" type="button">저장</button>
+        <button id="resetBtn" class="btn danger" type="button">초기화</button>
+      </div>
+    </header>
+
+    <section class="stats" aria-label="게임 현황">
+      <div class="stat"><span>스테이지</span><strong id="stageText">1</strong></div>
+      <div class="stat"><span>골드</span><strong id="goldText">0</strong></div>
+      <div class="stat"><span>공격력</span><strong id="damageText">0</strong></div>
+      <div class="stat"><span>무기</span><strong id="weaponText">낡은 검 +0</strong></div>
+      <div class="stat"><span>최고 기록</span><strong id="bestText">1 단계</strong></div>
+    </section>
+
+    <section class="game">
+      <div class="arena-wrap">
+        <canvas id="arena" width="900" height="600" aria-label="전투 화면"></canvas>
+        <div class="battle-overlay">
+          <div class="bar-row">
+            <span class="bar-label" id="monsterNameText">슬라임</span>
+            <div class="bar"><div id="monsterHpFill" class="fill hp-monster"></div></div>
+            <span class="bar-value" id="monsterHpText">0%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">체력</span>
+            <div class="bar"><div id="playerHpFill" class="fill hp-player"></div></div>
+            <span class="bar-value" id="playerHpText">0%</span>
+          </div>
+        </div>
+        <div id="stageClear" class="stage-clear">
+          <strong id="clearText">스테이지 클리어</strong>
+          <button id="farmBtn" class="btn" type="button">현재 단계 반복</button>
+          <button id="nextBtn" class="btn primary" type="button">다음 단계</button>
+        </div>
+      </div>
+
+      <aside class="shop" aria-label="강화 상점">
+        <h2>강화 상점</h2>
+        <div class="weapon-box">
+          <div class="weapon-name">
+            <span id="weaponNameText">낡은 검</span>
+            <span id="weaponLevelText">+0</span>
+          </div>
+          <div class="mini" id="weaponFlavor">나무 손잡이가 삐걱거리지만 첫 사냥에는 충분합니다.</div>
+          <div class="mini" id="weaponStats">치명타 5% / 자동공격 0.95초</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-head">스탯</div>
+          <div class="stat-lines">
+            <div class="stat-line"><span>최대 체력</span><strong id="statHpText">160</strong></div>
+            <div class="stat-line"><span>공격력</span><strong id="statDamageText">13</strong></div>
+            <div class="stat-line"><span>치명타</span><strong id="statCritText">5%</strong></div>
+            <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.95초</strong></div>
+            <div class="stat-line"><span>체력 강화</span><strong id="statTrainingText">+0</strong></div>
+            <div class="stat-line"><span>진행 모드</span><strong id="statModeText">도전</strong></div>
+          </div>
+        </div>
+
+        <div class="upgrades">
+          <div class="upgrade">
+            <div class="upgrade-title">
+              <span class="upgrade-heading">무기 강화 <span id="weaponUpgradeLevelText" class="level-badge">+0</span></span>
+              <span id="weaponCostText">0 G</span>
+            </div>
+            <div class="mini" id="weaponUpgradeText">공격력과 치명타 확률이 상승합니다.</div>
+            <button id="upgradeWeaponBtn" class="btn primary" type="button">강화하기</button>
+          </div>
+
+          <div class="upgrade">
+            <div class="upgrade-title">
+              <span>체력 강화</span>
+              <span id="trainCostText">0 G</span>
+            </div>
+            <div class="mini" id="trainText">최대 체력과 받는 피해 감소가 상승합니다.</div>
+            <button id="trainBtn" class="btn green" type="button">강화하기</button>
+          </div>
+
+          <div class="upgrade">
+            <div class="upgrade-title">
+              <span>응급 회복</span>
+              <span id="healCostText">0 G</span>
+            </div>
+            <div class="mini">체력을 즉시 모두 회복합니다.</div>
+            <button id="healBtn" class="btn blue" type="button">회복하기</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="attackBtn" class="btn primary" type="button">공격</button>
+          <button id="autoBtn" class="btn" type="button">자동 저장 켜짐</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="log-panel">
+      <h2>전투 기록</h2>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const canvas = document.getElementById("arena");
+    const ctx = canvas.getContext("2d");
+
+    const ui = {
+      stageText: document.getElementById("stageText"),
+      goldText: document.getElementById("goldText"),
+      damageText: document.getElementById("damageText"),
+      weaponText: document.getElementById("weaponText"),
+      bestText: document.getElementById("bestText"),
+      monsterNameText: document.getElementById("monsterNameText"),
+      monsterHpFill: document.getElementById("monsterHpFill"),
+      monsterHpText: document.getElementById("monsterHpText"),
+      playerHpFill: document.getElementById("playerHpFill"),
+      playerHpText: document.getElementById("playerHpText"),
+      stageClear: document.getElementById("stageClear"),
+      clearText: document.getElementById("clearText"),
+      weaponNameText: document.getElementById("weaponNameText"),
+      weaponLevelText: document.getElementById("weaponLevelText"),
+      weaponFlavor: document.getElementById("weaponFlavor"),
+      weaponStats: document.getElementById("weaponStats"),
+      weaponUpgradeLevelText: document.getElementById("weaponUpgradeLevelText"),
+      statHpText: document.getElementById("statHpText"),
+      statDamageText: document.getElementById("statDamageText"),
+      statCritText: document.getElementById("statCritText"),
+      statSpeedText: document.getElementById("statSpeedText"),
+      statTrainingText: document.getElementById("statTrainingText"),
+      statModeText: document.getElementById("statModeText"),
+      weaponCostText: document.getElementById("weaponCostText"),
+      weaponUpgradeText: document.getElementById("weaponUpgradeText"),
+      trainCostText: document.getElementById("trainCostText"),
+      trainText: document.getElementById("trainText"),
+      healCostText: document.getElementById("healCostText"),
+      upgradeWeaponBtn: document.getElementById("upgradeWeaponBtn"),
+      trainBtn: document.getElementById("trainBtn"),
+      healBtn: document.getElementById("healBtn"),
+      attackBtn: document.getElementById("attackBtn"),
+      autoBtn: document.getElementById("autoBtn"),
+      saveBtn: document.getElementById("saveBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      farmBtn: document.getElementById("farmBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      log: document.getElementById("log"),
+      toast: document.getElementById("toast")
+    };
+
+    const saveKey = "steel-expedition-save-v1";
+    const weaponTiers = [
+      { level: 0, name: "낡은 검", color: "#c0c8d2", flavor: "나무 손잡이가 삐걱거리지만 첫 사냥에는 충분합니다." },
+      { level: 5, name: "강철 검", color: "#b9d6ff", flavor: "묵직한 날이 몬스터의 가죽을 가릅니다." },
+      { level: 10, name: "룬 블레이드", color: "#8cf0ce", flavor: "검신에 새겨진 문양이 타격마다 빛납니다." },
+      { level: 15, name: "붉은 성검", color: "#ff9b7a", flavor: "뜨거운 검기가 보스의 방어를 녹입니다." },
+      { level: 22, name: "별빛 대검", color: "#f8de6f", flavor: "베는 순간 금빛 잔상이 전장을 가릅니다." },
+      { level: 30, name: "용왕의 칼날", color: "#d7b4ff", flavor: "오래된 왕국의 무기. 공격마다 폭발이 일어납니다." }
+    ];
+
+    const monsterTypes = [
+      { name: "초록 슬라임", color: "#6be07b", shape: "slime" },
+      { name: "동굴 박쥐", color: "#a87cff", shape: "bat" },
+      { name: "철갑 멧돼지", color: "#c49b65", shape: "boar" },
+      { name: "불꽃 골렘", color: "#ff7e50", shape: "golem" },
+      { name: "심연 기사", color: "#7aa8ff", shape: "knight" }
+    ];
+
+    const state = {
+      stage: 1,
+      bestStage: 1,
+      gold: 80,
+      weaponLevel: 0,
+      training: 0,
+      playerHp: 160,
+      monstersDefeated: 0,
+      stageCleared: false,
+      repeatMode: false,
+      autoAdvanceAt: 0,
+      autoSave: true,
+      lastAutoAttack: 0,
+      lastMonsterAttack: 0,
+      lastSave: 0,
+      slashTimer: 0,
+      playerHitTimer: 0,
+      monsterHitTimer: 0,
+      floating: [],
+      sparks: [],
+      monster: null
+    };
+
+    function formatNumber(value) {
+      if (value >= 1000000000) return (value / 1000000000).toFixed(1) + "B";
+      if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+      if (value >= 10000) return Math.floor(value).toLocaleString("ko-KR");
+      return Math.floor(value).toString();
+    }
+
+    function currentWeapon() {
+      let tier = weaponTiers[0];
+      for (const next of weaponTiers) {
+        if (state.weaponLevel >= next.level) tier = next;
+      }
+      return tier;
+    }
+
+    function attackSpeed() {
+      return Math.max(480, 960 - state.weaponLevel * 18);
+    }
+
+    function critChance() {
+      return Math.min(0.38, 0.05 + state.weaponLevel * 0.009);
+    }
+
+    function playerMaxHp() {
+      return Math.floor(160 + state.training * 34 + Math.pow(state.training, 1.22) * 8);
+    }
+
+    function baseDamage() {
+      const level = state.weaponLevel;
+      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4);
+    }
+
+    function weaponCost() {
+      return Math.floor(55 * Math.pow(1.34, state.weaponLevel) * (1 + Math.max(0, state.weaponLevel - 8) * 0.04));
+    }
+
+    function trainCost() {
+      return Math.floor(85 * Math.pow(1.42, state.training));
+    }
+
+    function healCost() {
+      return Math.max(18, Math.floor(24 * Math.pow(state.stage, 1.2)));
+    }
+
+    function stageTarget() {
+      return state.stage % 5 === 0 ? 4 : 5;
+    }
+
+    function monsterScale(stage, index) {
+      const boss = index >= stageTarget() - 1;
+      return boss ? 1.85 + stage * 0.035 : 1 + index * 0.12;
+    }
+
+    function makeMonster() {
+      const target = stageTarget();
+      const index = Math.min(state.monstersDefeated, target - 1);
+      const type = monsterTypes[(state.stage + index - 1) % monsterTypes.length];
+      const scale = monsterScale(state.stage, index);
+      const boss = index >= target - 1;
+      const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
+      const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1));
+      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08));
+      return {
+        ...type,
+        name: boss ? "우두머리 " + type.name : type.name,
+        maxHp,
+        hp: maxHp,
+        attack,
+        reward,
+        boss,
+        bob: Math.random() * Math.PI * 2
+      };
+    }
+
+    function addLog(message) {
+      const p = document.createElement("p");
+      p.innerHTML = message;
+      ui.log.prepend(p);
+      while (ui.log.children.length > 24) {
+        ui.log.removeChild(ui.log.lastElementChild);
+      }
+    }
+
+    function showToast(message) {
+      ui.toast.textContent = message;
+      ui.toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => ui.toast.classList.remove("show"), 1600);
+    }
+
+    function addFloating(text, x, y, color) {
+      state.floating.push({ text, x, y, color, age: 0, life: 900 });
+    }
+
+    function addSparks(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        state.sparks.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 260,
+          vy: (Math.random() - 0.75) * 260,
+          age: 0,
+          life: 420 + Math.random() * 260,
+          color,
+          size: 2 + Math.random() * 3
+        });
+      }
+    }
+
+    function attack(manual = false) {
+      if (state.stageCleared || state.playerHp <= 0 || !state.monster) return;
+      const crit = Math.random() < critChance();
+      const roll = 0.88 + Math.random() * 0.24;
+      const damage = Math.floor(baseDamage() * roll * (crit ? 2.05 : 1));
+      state.monster.hp = Math.max(0, state.monster.hp - damage);
+      state.slashTimer = 150;
+      state.monsterHitTimer = 120;
+      addFloating((crit ? "치명 " : "") + formatNumber(damage), canvas.width * 0.62, canvas.height * 0.37, crit ? "#f7c948" : "#f2f5f7");
+      addSparks(canvas.width * 0.61, canvas.height * 0.45, crit ? "#f7c948" : currentWeapon().color, crit ? 16 : 9);
+
+      if (manual) {
+        state.lastAutoAttack = performance.now();
+      }
+
+      if (state.monster.hp <= 0) {
+        defeatMonster();
+      } else {
+        updateUI();
+      }
+    }
+
+    function monsterAttack(now) {
+      if (state.stageCleared || state.playerHp <= 0 || !state.monster) return;
+      if (now - state.lastMonsterAttack < 1220) return;
+      state.lastMonsterAttack = now;
+      const guard = Math.min(0.42, state.training * 0.012);
+      const damage = Math.max(1, Math.floor(state.monster.attack * (1 - guard) * (0.86 + Math.random() * 0.26)));
+      state.playerHp = Math.max(0, state.playerHp - damage);
+      state.playerHitTimer = 140;
+      addFloating("-" + formatNumber(damage), canvas.width * 0.28, canvas.height * 0.43, "#ee5d5d");
+
+      if (state.playerHp <= 0) {
+        retreatAfterDefeat();
+        return;
+      }
+      updateUI();
+    }
+
+    function defeatMonster() {
+      const reward = state.monster.reward;
+      state.gold += reward;
+      state.monstersDefeated += 1;
+      state.playerHp = Math.min(playerMaxHp(), state.playerHp + Math.floor(playerMaxHp() * 0.08));
+      addFloating("+" + formatNumber(reward) + " G", canvas.width * 0.62, canvas.height * 0.30, "#f7c948");
+      addSparks(canvas.width * 0.62, canvas.height * 0.46, "#f7c948", state.monster.boss ? 32 : 18);
+      addLog(state.monster.name + " 처치. <b>" + formatNumber(reward) + " G</b> 획득.");
+
+      if (state.monstersDefeated >= stageTarget()) {
+        state.stageCleared = true;
+        state.bestStage = Math.max(state.bestStage, state.stage);
+        state.playerHp = playerMaxHp();
+        scheduleStageChoice();
+        if (state.repeatMode) {
+          addLog("<b>" + state.stage + "단계</b>를 클리어했습니다. 반복 모드라 같은 단계를 다시 시작합니다.");
+          showToast("스테이지 클리어 - 반복 준비");
+        } else {
+          addLog("<b>" + state.stage + "단계</b>를 클리어했습니다. 곧 다음 단계로 이동합니다.");
+          showToast("스테이지 클리어 - 자동 진행");
+        }
+      } else {
+        state.monster = makeMonster();
+      }
+      saveGame();
+      updateUI();
+    }
+
+    function upgradeWeapon() {
+      const cost = weaponCost();
+      if (state.gold < cost) {
+        showToast("골드가 부족합니다.");
+        return;
+      }
+
+      const before = currentWeapon().name;
+      state.gold -= cost;
+      state.weaponLevel += 1;
+      const after = currentWeapon().name;
+      addSparks(canvas.width * 0.28, canvas.height * 0.50, currentWeapon().color, 24);
+      addLog("무기 강화 성공. " + after + " <b>+" + state.weaponLevel + "</b>");
+      if (before !== after) {
+        addLog("무기가 <b>" + after + "</b>로 진화했습니다.");
+        showToast(after + " 획득");
+      } else {
+        showToast("무기 +" + state.weaponLevel);
+      }
+      saveGame();
+      updateUI();
+    }
+
+    function train() {
+      const cost = trainCost();
+      if (state.gold < cost) {
+        showToast("골드가 부족합니다.");
+        return;
+      }
+      state.gold -= cost;
+      state.training += 1;
+      state.playerHp = playerMaxHp();
+      addLog("체력 강화 완료. 최대 체력과 방어력이 상승했습니다.");
+      showToast("체력 강화 +" + state.training);
+      saveGame();
+      updateUI();
+    }
+
+    function heal() {
+      const cost = healCost();
+      if (state.playerHp >= playerMaxHp()) {
+        showToast("이미 체력이 가득 찼습니다.");
+        return;
+      }
+      if (state.gold < cost) {
+        showToast("골드가 부족합니다.");
+        return;
+      }
+      state.gold -= cost;
+      state.playerHp = playerMaxHp();
+      addLog("응급 회복으로 체력을 모두 회복했습니다.");
+      showToast("체력 회복");
+      saveGame();
+      updateUI();
+    }
+
+    function retreatAfterDefeat() {
+      const oldStage = state.stage;
+      state.stage = Math.max(1, state.stage - 1);
+      state.monstersDefeated = 0;
+      state.stageCleared = false;
+      state.repeatMode = true;
+      state.autoAdvanceAt = 0;
+      state.playerHp = playerMaxHp();
+      state.monster = makeMonster();
+      state.lastMonsterAttack = performance.now();
+      addLog("체력이 모두 떨어져 <b>" + oldStage + "단계</b>에서 후퇴했습니다. 이제 <b>" + state.stage + "단계</b>를 반복합니다.");
+      showToast(state.stage + "단계 반복 모드");
+      saveGame();
+      updateUI();
+    }
+
+    function scheduleStageChoice() {
+      state.autoAdvanceAt = performance.now() + 1800;
+      updateClearText(performance.now());
+    }
+
+    function updateClearText(now) {
+      if (!state.stageCleared) return;
+      const seconds = Math.max(1, Math.ceil((state.autoAdvanceAt - now) / 1000));
+      const action = state.repeatMode ? "같은 단계 반복" : "다음 단계 이동";
+      ui.clearText.textContent = state.stage + "단계 클리어 - " + seconds + "초 뒤 " + action;
+    }
+
+    function nextStage() {
+      if (!state.stageCleared) return;
+      state.stage += 1;
+      state.bestStage = Math.max(state.bestStage, state.stage);
+      state.monstersDefeated = 0;
+      state.stageCleared = false;
+      state.repeatMode = false;
+      state.autoAdvanceAt = 0;
+      state.playerHp = playerMaxHp();
+      state.monster = makeMonster();
+      state.lastMonsterAttack = performance.now();
+      addLog("<b>" + state.stage + "단계</b> 진입. 몬스터가 더 강해지고 보상도 증가합니다.");
+      saveGame();
+      updateUI();
+    }
+
+    function farmStage() {
+      if (!state.stageCleared) return;
+      state.monstersDefeated = 0;
+      state.stageCleared = false;
+      state.repeatMode = true;
+      state.autoAdvanceAt = 0;
+      state.playerHp = playerMaxHp();
+      state.monster = makeMonster();
+      addLog("현재 단계 반복 모드를 시작합니다.");
+      saveGame();
+      updateUI();
+    }
+
+    function saveGame() {
+      const data = {
+        stage: state.stage,
+        bestStage: state.bestStage,
+        gold: state.gold,
+        weaponLevel: state.weaponLevel,
+        training: state.training,
+        playerHp: state.playerHp,
+        monstersDefeated: state.monstersDefeated,
+        stageCleared: state.stageCleared,
+        repeatMode: state.repeatMode,
+        autoSave: state.autoSave
+      };
+      localStorage.setItem(saveKey, JSON.stringify(data));
+      state.lastSave = performance.now();
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(saveKey);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== "object") return false;
+        state.stage = Math.max(1, Number(data.stage) || 1);
+        state.bestStage = Math.max(1, Number(data.bestStage) || state.stage);
+        state.gold = Math.max(0, Number(data.gold) || 0);
+        state.weaponLevel = Math.max(0, Number(data.weaponLevel) || 0);
+        state.training = Math.max(0, Number(data.training) || 0);
+        state.playerHp = Math.max(1, Math.min(playerMaxHp(), Number(data.playerHp) || playerMaxHp()));
+        state.monstersDefeated = Math.max(0, Number(data.monstersDefeated) || 0);
+        state.stageCleared = Boolean(data.stageCleared);
+        state.repeatMode = Boolean(data.repeatMode);
+        state.autoSave = data.autoSave !== false;
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function resetGame() {
+      if (!confirm("진행 상황을 모두 초기화할까요?")) return;
+      localStorage.removeItem(saveKey);
+      state.stage = 1;
+      state.bestStage = 1;
+      state.gold = 80;
+      state.weaponLevel = 0;
+      state.training = 0;
+      state.playerHp = playerMaxHp();
+      state.monstersDefeated = 0;
+      state.stageCleared = false;
+      state.repeatMode = false;
+      state.autoAdvanceAt = 0;
+      state.floating = [];
+      state.sparks = [];
+      state.monster = makeMonster();
+      ui.log.innerHTML = "";
+      addLog("새 원정이 시작되었습니다.");
+      saveGame();
+      updateUI();
+    }
+
+    function updateUI() {
+      const weapon = currentWeapon();
+      const maxHp = playerMaxHp();
+      const monster = state.monster;
+      const monsterRatio = monster ? monster.hp / monster.maxHp : 0;
+      const playerRatio = state.playerHp / maxHp;
+
+      ui.stageText.textContent = state.stage + " 단계" + (state.repeatMode ? " 반복" : "");
+      ui.goldText.textContent = formatNumber(state.gold) + " G";
+      ui.damageText.textContent = formatNumber(baseDamage());
+      ui.weaponText.textContent = weapon.name + " +" + state.weaponLevel;
+      ui.bestText.textContent = state.bestStage + " 단계";
+      ui.monsterNameText.textContent = monster ? monster.name : "대기 중";
+      ui.monsterHpFill.style.width = Math.max(0, monsterRatio * 100) + "%";
+      ui.monsterHpText.textContent = Math.ceil(Math.max(0, monsterRatio * 100)) + "%";
+      ui.playerHpFill.style.width = Math.max(0, playerRatio * 100) + "%";
+      ui.playerHpText.textContent = Math.ceil(Math.max(0, playerRatio * 100)) + "%";
+      ui.stageClear.classList.toggle("show", state.stageCleared);
+      if (state.stageCleared) {
+        updateClearText(performance.now());
+      }
+
+      ui.weaponNameText.textContent = weapon.name;
+      ui.weaponNameText.style.color = weapon.color;
+      ui.weaponLevelText.textContent = "+" + state.weaponLevel;
+      ui.weaponUpgradeLevelText.textContent = "+" + state.weaponLevel;
+      ui.weaponFlavor.textContent = weapon.flavor;
+      ui.weaponStats.textContent = "치명타 " + Math.round(critChance() * 100) + "% / 자동공격 " + (attackSpeed() / 1000).toFixed(2) + "초";
+      ui.statHpText.textContent = formatNumber(maxHp);
+      ui.statDamageText.textContent = formatNumber(baseDamage());
+      ui.statCritText.textContent = Math.round(critChance() * 100) + "%";
+      ui.statSpeedText.textContent = (attackSpeed() / 1000).toFixed(2) + "초";
+      ui.statTrainingText.textContent = "+" + state.training;
+      ui.statModeText.textContent = state.repeatMode ? "반복" : "도전";
+      ui.weaponCostText.textContent = formatNumber(weaponCost()) + " G";
+      ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
+      ui.healCostText.textContent = formatNumber(healCost()) + " G";
+      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, baseDamageAt(state.weaponLevel + 1) - baseDamage())) + ", 치명타와 공격 속도 상승";
+      ui.trainText.textContent = "체력 강화 +" + state.training + ". 최대 체력 " + formatNumber(maxHp) + ", 받는 피해 감소";
+      ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
+      ui.trainBtn.disabled = state.gold < trainCost();
+      ui.healBtn.disabled = state.gold < healCost() || state.playerHp >= maxHp;
+      ui.attackBtn.disabled = state.stageCleared;
+      ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
+    }
+
+    function baseDamageAt(level) {
+      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4);
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      const width = Math.max(620, Math.floor(rect.width * ratio));
+      const height = Math.max(480, Math.floor(rect.height * ratio));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    }
+
+    function drawBackground(t) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, "#202832");
+      grad.addColorStop(0.58, "#171c22");
+      grad.addColorStop(1, "#101215");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      ctx.strokeStyle = "#3c4856";
+      ctx.lineWidth = Math.max(1, w * 0.002);
+      for (let i = 0; i < 10; i++) {
+        const y = h * 0.18 + i * h * 0.055;
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.sin(t * 0.0007 + i) * 5);
+        ctx.lineTo(w, y + Math.cos(t * 0.0005 + i) * 5);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = "#20242a";
+      ctx.beginPath();
+      ctx.ellipse(w * 0.52, h * 0.78, w * 0.42, h * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#46515d";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(247,201,72,0.12)";
+      ctx.beginPath();
+      ctx.arc(w * 0.86, h * 0.15, w * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPlayer(t) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const x = w * 0.28;
+      const y = h * 0.61 + Math.sin(t * 0.004) * 4;
+      const hitOffset = state.playerHitTimer > 0 ? Math.sin(t * 0.08) * 6 : 0;
+      const weapon = currentWeapon();
+
+      ctx.save();
+      ctx.translate(x + hitOffset, y);
+      ctx.fillStyle = "rgba(0,0,0,0.34)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * 0.19, w * 0.085, h * 0.025, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d5dde7";
+      ctx.strokeStyle = "#111417";
+      ctx.lineWidth = Math.max(3, w * 0.004);
+      ctx.beginPath();
+      ctx.roundRect(-w * 0.045, -h * 0.02, w * 0.09, h * 0.15, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#394653";
+      ctx.beginPath();
+      ctx.roundRect(-w * 0.035, h * 0.045, w * 0.07, h * 0.10, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f0c79a";
+      ctx.beginPath();
+      ctx.arc(0, -h * 0.07, w * 0.042, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#26303a";
+      ctx.beginPath();
+      ctx.arc(0, -h * 0.086, w * 0.047, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = weapon.color;
+      ctx.lineWidth = Math.max(7, w * 0.011);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      const swing = state.slashTimer > 0 ? Math.sin((150 - state.slashTimer) / 150 * Math.PI) * 0.35 : 0;
+      ctx.moveTo(w * 0.052, h * 0.025);
+      ctx.lineTo(w * (0.17 + swing), -h * (0.11 + swing * 0.08));
+      ctx.stroke();
+
+      ctx.fillStyle = weapon.color;
+      ctx.beginPath();
+      ctx.arc(w * 0.17, -h * 0.11, w * 0.012, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawMonster(t) {
+      if (!state.monster) return;
+      const w = canvas.width;
+      const h = canvas.height;
+      const monster = state.monster;
+      const x = w * 0.64;
+      const y = h * 0.61 + Math.sin(t * 0.004 + monster.bob) * 6;
+      const size = (monster.boss ? 1.22 : 1) * Math.min(w, h);
+      const hitScale = state.monsterHitTimer > 0 ? 1.04 : 1;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(hitScale, hitScale);
+      ctx.fillStyle = "rgba(0,0,0,0.36)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * 0.19, w * 0.11, h * 0.032, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#101215";
+      ctx.lineWidth = Math.max(3, w * 0.004);
+      ctx.fillStyle = monster.color;
+
+      if (monster.shape === "slime") {
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.12, size * 0.10);
+        ctx.quadraticCurveTo(-size * 0.11, -size * 0.08, 0, -size * 0.12);
+        ctx.quadraticCurveTo(size * 0.14, -size * 0.06, size * 0.13, size * 0.10);
+        ctx.quadraticCurveTo(0, size * 0.17, -size * 0.12, size * 0.10);
+        ctx.fill();
+        ctx.stroke();
+      } else if (monster.shape === "bat") {
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.16, 0);
+        ctx.lineTo(-size * 0.06, -size * 0.09);
+        ctx.lineTo(0, -size * 0.02);
+        ctx.lineTo(size * 0.06, -size * 0.09);
+        ctx.lineTo(size * 0.16, 0);
+        ctx.lineTo(size * 0.06, size * 0.08);
+        ctx.lineTo(0, size * 0.03);
+        ctx.lineTo(-size * 0.06, size * 0.08);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (monster.shape === "boar") {
+        ctx.beginPath();
+        ctx.roundRect(-size * 0.13, -size * 0.06, size * 0.25, size * 0.17, 24);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f5efe5";
+        ctx.beginPath();
+        ctx.moveTo(size * 0.10, size * 0.02);
+        ctx.lineTo(size * 0.18, -size * 0.02);
+        ctx.lineTo(size * 0.12, size * 0.06);
+        ctx.fill();
+      } else if (monster.shape === "golem") {
+        ctx.beginPath();
+        ctx.roundRect(-size * 0.10, -size * 0.14, size * 0.20, size * 0.25, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#ffd37a";
+        ctx.fillRect(-size * 0.045, -size * 0.04, size * 0.09, size * 0.025);
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(-size * 0.09, -size * 0.13, size * 0.18, size * 0.26, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#20242a";
+        ctx.fillRect(-size * 0.055, -size * 0.055, size * 0.11, size * 0.025);
+        ctx.strokeStyle = "#e6efff";
+        ctx.lineWidth = Math.max(5, w * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.13, size * 0.02);
+        ctx.lineTo(-size * 0.21, size * 0.11);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#101215";
+      ctx.beginPath();
+      ctx.arc(-size * 0.035, -size * 0.01, size * 0.012, 0, Math.PI * 2);
+      ctx.arc(size * 0.045, -size * 0.01, size * 0.012, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (monster.boss) {
+        ctx.fillStyle = "#f7c948";
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.06, -size * 0.16);
+        ctx.lineTo(-size * 0.02, -size * 0.22);
+        ctx.lineTo(size * 0.02, -size * 0.16);
+        ctx.lineTo(size * 0.06, -size * 0.22);
+        ctx.lineTo(size * 0.08, -size * 0.14);
+        ctx.lineTo(-size * 0.08, -size * 0.14);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawEffects(dt) {
+      for (let i = state.sparks.length - 1; i >= 0; i--) {
+        const spark = state.sparks[i];
+        spark.age += dt;
+        spark.x += spark.vx * dt / 1000;
+        spark.y += spark.vy * dt / 1000;
+        spark.vy += 460 * dt / 1000;
+        const alpha = Math.max(0, 1 - spark.age / spark.life);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = spark.color;
+        ctx.beginPath();
+        ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
+        ctx.fill();
+        if (spark.age >= spark.life) state.sparks.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.font = "800 " + Math.max(18, canvas.width * 0.027) + "px Segoe UI, Malgun Gothic, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (let i = state.floating.length - 1; i >= 0; i--) {
+        const item = state.floating[i];
+        item.age += dt;
+        item.y -= dt * 0.055;
+        const alpha = Math.max(0, 1 - item.age / item.life);
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "#0b0e11";
+        ctx.strokeText(item.text, item.x, item.y);
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, item.x, item.y);
+        if (item.age >= item.life) state.floating.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawStageInfo() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.34)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(w * 0.035, h * 0.78, w * 0.36, h * 0.11, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f2f5f7";
+      ctx.font = "800 " + Math.max(16, w * 0.024) + "px Segoe UI, Malgun Gothic, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("처치 " + state.monstersDefeated + " / " + stageTarget(), w * 0.055, h * 0.82);
+      ctx.fillStyle = "#aeb8c3";
+      ctx.font = "600 " + Math.max(12, w * 0.016) + "px Segoe UI, Malgun Gothic, sans-serif";
+      ctx.fillText("클릭하거나 공격 버튼으로 즉시 공격", w * 0.055, h * 0.855);
+      ctx.restore();
+    }
+
+    let previous = performance.now();
+    function loop(now) {
+      resizeCanvas();
+      const dt = Math.min(40, now - previous);
+      previous = now;
+
+      if (state.stageCleared) {
+        if (!state.autoAdvanceAt) {
+          scheduleStageChoice();
+        }
+        updateClearText(now);
+        if (now >= state.autoAdvanceAt) {
+          if (state.repeatMode) {
+            farmStage();
+          } else {
+            nextStage();
+          }
+        }
+      }
+
+      if (!state.stageCleared && now - state.lastAutoAttack >= attackSpeed()) {
+        state.lastAutoAttack = now;
+        attack(false);
+      }
+      monsterAttack(now);
+
+      state.slashTimer = Math.max(0, state.slashTimer - dt);
+      state.playerHitTimer = Math.max(0, state.playerHitTimer - dt);
+      state.monsterHitTimer = Math.max(0, state.monsterHitTimer - dt);
+
+      drawBackground(now);
+      drawPlayer(now);
+      drawMonster(now);
+      drawStageInfo();
+      drawEffects(dt);
+
+      if (state.autoSave && now - state.lastSave > 12000) {
+        saveGame();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener("pointerdown", () => attack(true));
+    ui.attackBtn.addEventListener("click", () => attack(true));
+    ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
+    ui.trainBtn.addEventListener("click", train);
+    ui.healBtn.addEventListener("click", heal);
+    ui.nextBtn.addEventListener("click", nextStage);
+    ui.farmBtn.addEventListener("click", farmStage);
+    ui.saveBtn.addEventListener("click", () => {
+      saveGame();
+      showToast("저장했습니다.");
+    });
+    ui.autoBtn.addEventListener("click", () => {
+      state.autoSave = !state.autoSave;
+      saveGame();
+      updateUI();
+    });
+    ui.resetBtn.addEventListener("click", resetGame);
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        attack(true);
+      }
+      if (event.key.toLowerCase() === "u") {
+        upgradeWeapon();
+      }
+      if (event.key.toLowerCase() === "n" && state.stageCleared) {
+        nextStage();
+      }
+    });
+
+    const loaded = loadGame();
+    state.playerHp = Math.min(playerMaxHp(), Math.max(1, state.playerHp));
+    state.monster = makeMonster();
+    if (state.stageCleared) {
+      scheduleStageChoice();
+    }
+    if (loaded) {
+      addLog("저장된 원정을 불러왔습니다.");
+    } else {
+      addLog("첫 원정 지원금 <b>80 G</b>를 받았습니다.");
+    }
+    updateUI();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
