@@ -43,34 +43,34 @@
     }
 
     .shell {
-      width: min(1180px, calc(100vw - 24px));
+      width: min(1080px, calc(100vw - 24px));
       min-height: 100vh;
       margin: 0 auto;
-      padding: 18px 0 24px;
+      padding: 10px 0 14px;
       display: grid;
       grid-template-rows: auto auto 1fr auto;
-      gap: 12px;
+      gap: 8px;
     }
 
     header {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 16px;
+      gap: 12px;
       align-items: end;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(28px, 4vw, 48px);
+      font-size: clamp(26px, 3vw, 38px);
       line-height: 0.95;
       font-weight: 900;
       letter-spacing: 0;
     }
 
     .subtitle {
-      margin: 8px 0 0;
+      margin: 5px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .top-actions {
@@ -84,18 +84,18 @@
     .stats {
       display: grid;
       grid-template-columns: repeat(5, minmax(130px, 1fr));
-      gap: 8px;
+      gap: 6px;
     }
 
     .stat {
-      min-height: 68px;
-      padding: 12px;
+      min-height: 54px;
+      padding: 9px 10px;
       background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent), var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
       display: grid;
       align-content: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .stat span {
@@ -105,16 +105,16 @@
     }
 
     .stat strong {
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.1;
       overflow-wrap: anywhere;
     }
 
     .game {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 330px;
-      gap: 12px;
-      min-height: 550px;
+      grid-template-columns: minmax(0, 1fr) 305px;
+      gap: 8px;
+      min-height: 456px;
     }
 
     .arena-wrap,
@@ -128,14 +128,14 @@
     .arena-wrap {
       position: relative;
       overflow: hidden;
-      min-height: 550px;
+      min-height: 456px;
     }
 
     canvas {
       display: block;
       width: 100%;
       height: 100%;
-      min-height: 550px;
+      min-height: 456px;
       cursor: crosshair;
       background: #15191e;
       touch-action: manipulation;
@@ -143,11 +143,11 @@
 
     .battle-overlay {
       position: absolute;
-      left: 14px;
-      right: 14px;
-      top: 14px;
+      left: 12px;
+      right: 12px;
+      top: 12px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
       pointer-events: none;
     }
 
@@ -199,14 +199,14 @@
     .stage-clear {
       position: absolute;
       left: 50%;
-      bottom: 18px;
+      bottom: 12px;
       transform: translateX(-50%);
       width: min(92%, 560px);
       display: none;
       grid-template-columns: 1fr auto auto;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
-      padding: 10px;
+      padding: 8px;
       border: 1px solid rgba(247,201,72,0.58);
       background: rgba(17,20,23,0.86);
       border-radius: 8px;
@@ -225,26 +225,26 @@
     .shop {
       display: grid;
       grid-template-rows: auto auto auto 1fr auto;
-      gap: 10px;
-      padding: 12px;
-      min-height: 550px;
+      gap: 7px;
+      padding: 9px;
+      min-height: 456px;
     }
 
     .shop h2,
     .log-panel h2 {
       margin: 0;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.1;
     }
 
     .weapon-box,
     .stat-box {
-      padding: 12px;
+      padding: 9px;
       border: 1px solid var(--line);
       background: var(--panel-2);
       border-radius: 8px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
 
     .stat-head {
@@ -255,12 +255,12 @@
     .stat-lines {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 6px;
     }
 
     .stat-line {
-      min-height: 50px;
-      padding: 8px;
+      min-height: 42px;
+      padding: 7px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(0,0,0,0.16);
       border-radius: 8px;
@@ -276,7 +276,7 @@
     }
 
     .stat-line strong {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.1;
       overflow-wrap: anywhere;
     }
@@ -292,13 +292,13 @@
 
     .mini {
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 11px;
+      line-height: 1.32;
     }
 
     .upgrades {
       display: grid;
-      gap: 8px;
+      gap: 7px;
       align-content: start;
       overflow: auto;
       padding-right: 2px;
@@ -306,8 +306,8 @@
 
     .upgrade {
       display: grid;
-      gap: 8px;
-      padding: 10px;
+      gap: 7px;
+      padding: 8px;
       border: 1px solid var(--line);
       background: #20262d;
       border-radius: 8px;
@@ -352,8 +352,8 @@
     }
 
     .btn {
-      min-height: 42px;
-      padding: 9px 11px;
+      min-height: 36px;
+      padding: 7px 10px;
       border: 1px solid #556270;
       background: linear-gradient(180deg, #343d48, #252c34);
       color: var(--text);
@@ -402,20 +402,20 @@
     }
 
     .log-panel {
-      padding: 12px;
+      padding: 9px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
 
     .log {
-      height: 96px;
+      height: 68px;
       overflow: auto;
-      padding: 10px;
+      padding: 8px;
       border: 1px solid var(--line);
       background: rgba(0,0,0,0.22);
       border-radius: 8px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       line-height: 1.45;
     }
 
@@ -575,7 +575,6 @@
             <div class="stat-line"><span>공격력</span><strong id="statDamageText">13</strong></div>
             <div class="stat-line"><span>치명타</span><strong id="statCritText">5%</strong></div>
             <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.95초</strong></div>
-            <div class="stat-line"><span>체력 강화</span><strong id="statTrainingText">+0</strong></div>
             <div class="stat-line"><span>진행 모드</span><strong id="statModeText">도전</strong></div>
           </div>
         </div>
@@ -592,20 +591,11 @@
 
           <div class="upgrade">
             <div class="upgrade-title">
-              <span>체력 강화</span>
+              <span class="upgrade-heading">체력 강화 <span id="trainingLevelText" class="level-badge">+0</span></span>
               <span id="trainCostText">0 G</span>
             </div>
             <div class="mini" id="trainText">최대 체력과 받는 피해 감소가 상승합니다.</div>
             <button id="trainBtn" class="btn green" type="button">강화하기</button>
-          </div>
-
-          <div class="upgrade">
-            <div class="upgrade-title">
-              <span>응급 회복</span>
-              <span id="healCostText">0 G</span>
-            </div>
-            <div class="mini">체력을 즉시 모두 회복합니다.</div>
-            <button id="healBtn" class="btn blue" type="button">회복하기</button>
           </div>
         </div>
 
@@ -650,16 +640,14 @@
       statDamageText: document.getElementById("statDamageText"),
       statCritText: document.getElementById("statCritText"),
       statSpeedText: document.getElementById("statSpeedText"),
-      statTrainingText: document.getElementById("statTrainingText"),
       statModeText: document.getElementById("statModeText"),
       weaponCostText: document.getElementById("weaponCostText"),
       weaponUpgradeText: document.getElementById("weaponUpgradeText"),
+      trainingLevelText: document.getElementById("trainingLevelText"),
       trainCostText: document.getElementById("trainCostText"),
       trainText: document.getElementById("trainText"),
-      healCostText: document.getElementById("healCostText"),
       upgradeWeaponBtn: document.getElementById("upgradeWeaponBtn"),
       trainBtn: document.getElementById("trainBtn"),
-      healBtn: document.getElementById("healBtn"),
       attackBtn: document.getElementById("attackBtn"),
       autoBtn: document.getElementById("autoBtn"),
       saveBtn: document.getElementById("saveBtn"),
@@ -749,10 +737,6 @@
 
     function trainCost() {
       return Math.floor(85 * Math.pow(1.42, state.training));
-    }
-
-    function healCost() {
-      return Math.max(18, Math.floor(24 * Math.pow(state.stage, 1.2)));
     }
 
     function stageTarget() {
@@ -925,24 +909,6 @@
       updateUI();
     }
 
-    function heal() {
-      const cost = healCost();
-      if (state.playerHp >= playerMaxHp()) {
-        showToast("이미 체력이 가득 찼습니다.");
-        return;
-      }
-      if (state.gold < cost) {
-        showToast("골드가 부족합니다.");
-        return;
-      }
-      state.gold -= cost;
-      state.playerHp = playerMaxHp();
-      addLog("응급 회복으로 체력을 모두 회복했습니다.");
-      showToast("체력 회복");
-      saveGame();
-      updateUI();
-    }
-
     function retreatAfterDefeat() {
       const oldStage = state.stage;
       state.stage = Math.max(1, state.stage - 1);
@@ -1093,16 +1059,14 @@
       ui.statDamageText.textContent = formatNumber(baseDamage());
       ui.statCritText.textContent = Math.round(critChance() * 100) + "%";
       ui.statSpeedText.textContent = (attackSpeed() / 1000).toFixed(2) + "초";
-      ui.statTrainingText.textContent = "+" + state.training;
       ui.statModeText.textContent = state.repeatMode ? "반복" : "도전";
       ui.weaponCostText.textContent = formatNumber(weaponCost()) + " G";
+      ui.trainingLevelText.textContent = "+" + state.training;
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
-      ui.healCostText.textContent = formatNumber(healCost()) + " G";
       ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, baseDamageAt(state.weaponLevel + 1) - baseDamage())) + ", 치명타와 공격 속도 상승";
       ui.trainText.textContent = "체력 강화 +" + state.training + ". 최대 체력 " + formatNumber(maxHp) + ", 받는 피해 감소";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
-      ui.healBtn.disabled = state.gold < healCost() || state.playerHp >= maxHp;
       ui.attackBtn.disabled = state.stageCleared;
       ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
     }
@@ -1417,7 +1381,6 @@
     ui.attackBtn.addEventListener("click", () => attack(true));
     ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
     ui.trainBtn.addEventListener("click", train);
-    ui.healBtn.addEventListener("click", heal);
     ui.nextBtn.addEventListener("click", nextStage);
     ui.farmBtn.addEventListener("click", farmStage);
     ui.saveBtn.addEventListener("click", () => {
