@@ -756,7 +756,7 @@
       const boss = index >= target - 1;
       const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
       const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1));
-      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * 1.2);
+      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * 2);
       return {
         ...type,
         name: boss ? "우두머리 " + type.name : type.name,
