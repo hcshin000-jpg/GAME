@@ -112,7 +112,7 @@
 
     .game {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 305px;
+      grid-template-columns: minmax(0, 1fr) 335px;
       gap: 8px;
       min-height: 456px;
     }
@@ -311,6 +311,101 @@
       border: 1px solid var(--line);
       background: #20262d;
       border-radius: 8px;
+    }
+
+    .armory {
+      background:
+        linear-gradient(135deg, rgba(247,201,72,0.10), transparent 42%),
+        #20262d;
+    }
+
+    .armory-grid {
+      display: grid;
+      gap: 6px;
+      max-height: 245px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .weapon-card {
+      width: 100%;
+      min-height: 66px;
+      padding: 7px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.17);
+      border-radius: 8px;
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      gap: 7px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .weapon-card:hover {
+      border-color: rgba(247,201,72,0.48);
+      background: rgba(247,201,72,0.08);
+    }
+
+    .weapon-card:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .weapon-card.equipped {
+      border-color: rgba(247,201,72,0.80);
+      box-shadow: inset 0 0 0 1px rgba(247,201,72,0.20), 0 0 18px rgba(247,201,72,0.10);
+    }
+
+    .weapon-card.locked {
+      border-style: dashed;
+    }
+
+    .weapon-swatch {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.20);
+      border-radius: 8px;
+      background: var(--weapon-color, var(--gold));
+      box-shadow: inset 0 0 14px rgba(255,255,255,0.16), 0 0 12px var(--weapon-glow, rgba(247,201,72,0.16));
+      position: relative;
+    }
+
+    .weapon-swatch::after {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 4px;
+      width: 4px;
+      height: 25px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      transform: rotate(35deg);
+    }
+
+    .weapon-meta {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .weapon-meta strong {
+      font-size: 13px;
+      line-height: 1.12;
+    }
+
+    .weapon-meta span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .weapon-state {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
     }
 
     .upgrade-title {
@@ -580,6 +675,15 @@
         </div>
 
         <div class="upgrades">
+          <div class="upgrade armory">
+            <div class="upgrade-title">
+              <span class="upgrade-heading">무기 보관함 <span id="skinCountText" class="level-badge">1/12</span></span>
+              <span>골드 구매</span>
+            </div>
+            <div class="mini" id="skinHint">검, 창, 활, 도끼, 마법 무기 등을 구매하고 장착할 수 있습니다.</div>
+            <div id="weaponSkinList" class="armory-grid"></div>
+          </div>
+
           <div class="upgrade">
             <div class="upgrade-title">
               <span class="upgrade-heading">무기 강화 <span id="weaponUpgradeLevelText" class="level-badge">+0</span></span>
@@ -635,6 +739,9 @@
       weaponLevelText: document.getElementById("weaponLevelText"),
       weaponFlavor: document.getElementById("weaponFlavor"),
       weaponStats: document.getElementById("weaponStats"),
+      weaponSkinList: document.getElementById("weaponSkinList"),
+      skinCountText: document.getElementById("skinCountText"),
+      skinHint: document.getElementById("skinHint"),
       weaponUpgradeLevelText: document.getElementById("weaponUpgradeLevelText"),
       statHpText: document.getElementById("statHpText"),
       statDamageText: document.getElementById("statDamageText"),
@@ -668,17 +775,69 @@
       { level: 30, name: "용왕의 칼날", color: "#d7b4ff", flavor: "오래된 왕국의 무기. 공격마다 폭발이 일어납니다." }
     ];
 
+    const weaponSkins = [
+      { id: "iron_sword", kind: "sword", name: "훈련용 검", cost: 0, minLevel: 0, color: "#c0c8d2", accent: "#f8fbff", damageBonus: 0, critBonus: 0, speedBonus: 0, flavor: "가장 기본적인 검. 모든 강화의 기준입니다." },
+      { id: "storm_spear", kind: "spear", name: "폭풍 장창", cost: 850, minLevel: 3, color: "#7fd6ff", accent: "#e8fbff", damageBonus: 8, critBonus: 0.018, speedBonus: 26, flavor: "찌르는 순간 바람이 말려들어 연속 타격이 쉬워집니다." },
+      { id: "star_bow", kind: "bow", name: "별추적 활", cost: 1800, minLevel: 6, color: "#b99cff", accent: "#fff08a", damageBonus: 13, critBonus: 0.045, speedBonus: 38, flavor: "빛나는 화살이 약점을 따라 휘어집니다." },
+      { id: "lava_axe", kind: "axe", name: "용암 전투도끼", cost: 3400, minLevel: 9, color: "#ff714f", accent: "#ffd36e", damageBonus: 28, critBonus: 0.018, speedBonus: -18, flavor: "느리지만 한 번 맞으면 갑옷째로 갈라집니다." },
+      { id: "moon_twins", kind: "twin", name: "월광 쌍검", cost: 5600, minLevel: 12, color: "#dce7ff", accent: "#88f4ff", damageBonus: 18, critBonus: 0.04, speedBonus: 92, flavor: "두 개의 잔상이 번갈아 베며 빈틈을 만듭니다." },
+      { id: "thunder_staff", kind: "staff", name: "천둥 마도지팡이", cost: 9200, minLevel: 15, color: "#f4d44d", accent: "#7cf7ff", damageBonus: 36, critBonus: 0.055, speedBonus: 32, flavor: "마력 구체가 모일 때마다 번개가 튀어오릅니다." },
+      { id: "abyss_scythe", kind: "scythe", name: "심연 낫", cost: 14500, minLevel: 18, color: "#9a68ff", accent: "#ff6bd6", damageBonus: 48, critBonus: 0.065, speedBonus: 24, flavor: "검은 궤적이 적의 체력을 도려냅니다." },
+      { id: "gear_gunblade", kind: "gunblade", name: "기계식 총검", cost: 22500, minLevel: 21, color: "#9fb2c8", accent: "#63e6ff", damageBonus: 62, critBonus: 0.05, speedBonus: 78, flavor: "베는 순간 압축된 에너지 탄이 함께 폭발합니다." },
+      { id: "sun_greatsword", kind: "greatsword", name: "태양 대검", cost: 36000, minLevel: 25, color: "#ffd166", accent: "#ffffff", damageBonus: 86, critBonus: 0.04, speedBonus: -34, flavor: "무겁지만 화면을 가르는 금빛 칼날이 압도적입니다." },
+      { id: "nebula_bow", kind: "bow", name: "성운 장궁", cost: 58000, minLevel: 30, color: "#8aa0ff", accent: "#ffdc7a", damageBonus: 108, critBonus: 0.09, speedBonus: 64, flavor: "성운을 응축한 화살이 보스의 약점을 꿰뚫습니다." },
+      { id: "void_blade", kind: "sword", name: "공허 절단검", cost: 92000, minLevel: 35, color: "#6c4dff", accent: "#ff75d8", damageBonus: 145, critBonus: 0.075, speedBonus: 74, flavor: "공간이 접히듯 칼날의 잔상이 늦게 따라옵니다." },
+      { id: "dragon_trident", kind: "spear", name: "용왕 삼지창", cost: 145000, minLevel: 40, color: "#5de3ff", accent: "#fff08a", damageBonus: 190, critBonus: 0.095, speedBonus: 94, flavor: "세 갈래 창끝에서 용의 포효가 터져 나옵니다." }
+    ];
+
     const monsterTypes = [
-      { name: "초록 슬라임", color: "#6be07b", shape: "slime" },
-      { name: "동굴 박쥐", color: "#a87cff", shape: "bat" },
-      { name: "철갑 멧돼지", color: "#c49b65", shape: "boar" },
-      { name: "불꽃 골렘", color: "#ff7e50", shape: "golem" },
-      { name: "심연 기사", color: "#7aa8ff", shape: "knight" },
-      { name: "독침 맨티스", color: "#9de06a", shape: "mantis" },
-      { name: "서리 와이번", color: "#8fd6ff", shape: "wyvern" },
-      { name: "묘지 해골병", color: "#d8d1bd", shape: "skeleton" },
-      { name: "늪지 촉수괴", color: "#65c6a5", shape: "tentacle" },
-      { name: "암흑 사냥개", color: "#8f6cff", shape: "hound" }
+      { name: "불씨 랩터", color: "#ff8b4a", accent: "#ffd166", shape: "raptor" },
+      { name: "번개 꼬리수", color: "#f4d44d", accent: "#7cf7ff", shape: "fox" },
+      { name: "푸른 갑각충", color: "#4fb7ff", accent: "#b9f8ff", shape: "beetle" },
+      { name: "미니 드래코", color: "#6ce2a4", accent: "#fff0a3", shape: "dragon" },
+      { name: "잎사귀 야수", color: "#6bd66e", accent: "#d8ff8a", shape: "plant" },
+      { name: "톱니 박쥐", color: "#9a7cff", accent: "#f7ecff", shape: "gearbat" },
+      { name: "철갑 돌진수", color: "#c79a63", accent: "#f5e1bd", shape: "boar" },
+      { name: "물결 지느러미수", color: "#53cfff", accent: "#d8fbff", shape: "serpent" },
+      { name: "독침 사마귀", color: "#a8e85f", accent: "#f1ffb8", shape: "mantis" },
+      { name: "수정 고슴도치", color: "#8edcff", accent: "#f0fbff", shape: "crystal" },
+      { name: "화염 티라노이드", color: "#ff5f3d", accent: "#ffd36e", shape: "rex" },
+      { name: "서리 와이번", color: "#8fd6ff", accent: "#f5fdff", shape: "wyvern" },
+      { name: "암흑 사냥견", color: "#8f6cff", accent: "#ff657a", shape: "hound" },
+      { name: "해골 병사수", color: "#d8d1bd", accent: "#aeb8c3", shape: "skeleton" },
+      { name: "전자 문어괴", color: "#65c6a5", accent: "#73fff0", shape: "tentacle" },
+      { name: "황금 뿔사슴", color: "#d8aa48", accent: "#fff0a6", shape: "stag" },
+      { name: "기계 늑대병", color: "#8ba7c9", accent: "#63e6ff", shape: "wolf" },
+      { name: "폭풍 조류수", color: "#77d6ff", accent: "#fff6a8", shape: "bird" },
+      { name: "용암 골렘", color: "#ff7e50", accent: "#ffd37a", shape: "golem" },
+      { name: "그림자 기사", color: "#7aa8ff", accent: "#82d8ff", shape: "knight" },
+      { name: "성광 페가수스", color: "#f2f6ff", accent: "#ffe27c", shape: "pegasus" },
+      { name: "가시 갑룡", color: "#7ec074", accent: "#f4ffae", shape: "ankylos" },
+      { name: "사이버 전갈", color: "#78a9ff", accent: "#ff64c8", shape: "scorpion" },
+      { name: "심해 해룡", color: "#4bb9d8", accent: "#c6fbff", shape: "leviathan" },
+      { name: "쌍검 사마귀", color: "#c2ec5f", accent: "#ffffff", shape: "mantis" },
+      { name: "검은 날개룡", color: "#7861d8", accent: "#ff78d2", shape: "dragon" },
+      { name: "백은 갑옷수", color: "#d8e2ef", accent: "#7be7ff", shape: "paladin" },
+      { name: "독안개 버섯괴", color: "#a66cf0", accent: "#bfff80", shape: "mushroom" },
+      { name: "붉은 폭룡", color: "#f24d38", accent: "#ffcf5c", shape: "rex" },
+      { name: "천둥 키메라", color: "#e9d84a", accent: "#8df7ff", shape: "chimera" },
+      { name: "고대 기계룡", color: "#a5b3c7", accent: "#67f2ff", shape: "mecha" },
+      { name: "악몽 광대수", color: "#d966ff", accent: "#ffef72", shape: "clown" },
+      { name: "성역 수호천사", color: "#f7f2df", accent: "#ffe68a", shape: "angel" },
+      { name: "심연 마왕수", color: "#653b9f", accent: "#ff4f6d", shape: "demon" },
+      { name: "별빛 용기사", color: "#9fa8ff", accent: "#fff08a", shape: "dragoon" },
+      { name: "최종 데이터 드래곤", color: "#5de3ff", accent: "#ff75d8", shape: "dataDragon" }
+    ];
+
+    const bossMonsterTypes = [
+      { name: "폭주 데이터 드래곤", color: "#5de3ff", accent: "#ff75d8", shape: "dataDragon" },
+      { name: "마그마 폭군룡", color: "#f24d38", accent: "#ffcf5c", shape: "rex" },
+      { name: "심해 군주 해룡", color: "#4bb9d8", accent: "#c6fbff", shape: "leviathan" },
+      { name: "천둥 키메라 로드", color: "#e9d84a", accent: "#8df7ff", shape: "chimera" },
+      { name: "고대 기계룡 제로", color: "#a5b3c7", accent: "#67f2ff", shape: "mecha" },
+      { name: "성역 수호대천사", color: "#f7f2df", accent: "#ffe68a", shape: "angel" },
+      { name: "심연 마왕 오르비스", color: "#653b9f", accent: "#ff4f6d", shape: "demon" },
+      { name: "별빛 용기사 카이저", color: "#9fa8ff", accent: "#fff08a", shape: "dragoon" }
     ];
 
     const state = {
@@ -701,7 +860,11 @@
       monsterHitTimer: 0,
       floating: [],
       sparks: [],
-      monster: null
+      monster: null,
+      recentMonsters: [],
+      recentMonsterShapes: [],
+      equippedSkin: "iron_sword",
+      ownedSkins: ["iron_sword"]
     };
 
     function formatNumber(value) {
@@ -711,7 +874,15 @@
       return Math.floor(value).toString();
     }
 
-    function currentWeapon() {
+    function getWeaponSkin(id = state.equippedSkin) {
+      return weaponSkins.find(skin => skin.id === id) || weaponSkins[0];
+    }
+
+    function ownsWeaponSkin(id) {
+      return state.ownedSkins.includes(id);
+    }
+
+    function currentWeaponTier() {
       let tier = weaponTiers[0];
       for (const next of weaponTiers) {
         if (state.weaponLevel >= next.level) tier = next;
@@ -719,12 +890,27 @@
       return tier;
     }
 
+    function currentWeapon() {
+      const tier = currentWeaponTier();
+      const skin = getWeaponSkin();
+      return {
+        ...skin,
+        tierName: tier.name,
+        tierColor: tier.color,
+        tierFlavor: tier.flavor,
+        color: skin.color || tier.color,
+        accent: skin.accent || tier.color
+      };
+    }
+
     function attackSpeed() {
-      return Math.max(480, 960 - state.weaponLevel * 18);
+      const weapon = getWeaponSkin();
+      return Math.max(340, 980 - state.weaponLevel * 24 - Math.floor(Math.sqrt(state.weaponLevel) * 8) - (weapon.speedBonus || 0));
     }
 
     function critChance() {
-      return Math.min(0.38, 0.05 + state.weaponLevel * 0.009);
+      const weapon = getWeaponSkin();
+      return Math.min(0.55, 0.06 + state.weaponLevel * 0.012 + Math.sqrt(state.weaponLevel) * 0.003 + (weapon.critBonus || 0));
     }
 
     function playerMaxHp() {
@@ -733,11 +919,12 @@
 
     function baseDamage() {
       const level = state.weaponLevel;
-      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4);
+      const weapon = getWeaponSkin();
+      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4 + (weapon.damageBonus || 0));
     }
 
     function weaponCost() {
-      return Math.floor(55 * Math.pow(1.34, state.weaponLevel) * (1 + Math.max(0, state.weaponLevel - 8) * 0.04));
+      return Math.floor(44 * Math.pow(1.30, state.weaponLevel) * (1 + Math.max(0, state.weaponLevel - 10) * 0.032));
     }
 
     function trainCost() {
@@ -757,21 +944,37 @@
 
     function monsterScale(stage, index) {
       const boss = index >= stageTarget() - 1;
-      return boss ? 1.85 + stage * 0.035 : 1 + index * 0.12;
+      return boss ? 2.15 + stage * 0.045 : 1 + index * 0.12;
+    }
+
+    function pickMonsterType(boss) {
+      const source = boss ? bossMonsterTypes : monsterTypes;
+      const recentNames = new Set(state.recentMonsters.slice(-10));
+      const recentShapes = new Set(state.recentMonsterShapes.slice(-5));
+      let pool = source.filter(type => !recentNames.has(type.name) && !recentShapes.has(type.shape));
+      if (pool.length < (boss ? 2 : 8)) pool = source.filter(type => !recentNames.has(type.name));
+      if (!pool.length) pool = source;
+
+      const type = pool[Math.floor(Math.random() * pool.length)];
+      state.recentMonsters.push(type.name);
+      state.recentMonsterShapes.push(type.shape);
+      while (state.recentMonsters.length > 14) state.recentMonsters.shift();
+      while (state.recentMonsterShapes.length > 7) state.recentMonsterShapes.shift();
+      return type;
     }
 
     function makeMonster() {
       const target = stageTarget();
       const index = Math.min(state.monstersDefeated, target - 1);
-      const type = monsterTypes[(state.stage + index - 1) % monsterTypes.length];
-      const scale = monsterScale(state.stage, index);
       const boss = index >= target - 1;
+      const type = pickMonsterType(boss);
+      const scale = monsterScale(state.stage, index);
       const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
       const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1));
       const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage));
       return {
         ...type,
-        name: boss ? "우두머리 " + type.name : type.name,
+        name: boss ? "보스 " + type.name : type.name,
         maxHp,
         hp: maxHp,
         attack,
@@ -795,6 +998,55 @@
       ui.toast.classList.add("show");
       clearTimeout(showToast.timer);
       showToast.timer = setTimeout(() => ui.toast.classList.remove("show"), 1600);
+    }
+
+    function buyOrEquipWeaponSkin(id) {
+      const skin = getWeaponSkin(id);
+      if (!skin) return;
+      if (state.weaponLevel < skin.minLevel) {
+        showToast("무기 +" + skin.minLevel + "부터 장착 가능합니다.");
+        return;
+      }
+      if (!ownsWeaponSkin(id)) {
+        if (state.gold < skin.cost) {
+          showToast("골드가 부족합니다.");
+          return;
+        }
+        state.gold -= skin.cost;
+        state.ownedSkins.push(id);
+        addLog("<b>" + skin.name + "</b> 구매 완료. 새로운 무기를 장착했습니다.");
+      }
+      state.equippedSkin = id;
+      addSparks(canvas.width * 0.28, canvas.height * 0.50, skin.color, 22);
+      showToast(skin.name + " 장착");
+      saveGame();
+      updateUI();
+    }
+
+    function renderWeaponSkins() {
+      ui.weaponSkinList.innerHTML = "";
+      for (const skin of weaponSkins) {
+        const owned = ownsWeaponSkin(skin.id);
+        const equipped = state.equippedSkin === skin.id;
+        const levelLocked = state.weaponLevel < skin.minLevel;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "weapon-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (levelLocked ? " locked" : "");
+        button.dataset.skinId = skin.id;
+        button.disabled = levelLocked;
+        button.style.setProperty("--weapon-color", "linear-gradient(135deg, " + skin.color + ", " + skin.accent + ")");
+        button.style.setProperty("--weapon-glow", skin.accent);
+
+        const stateText = equipped ? "장착중" : owned ? "장착" : levelLocked ? "+" + skin.minLevel + " 필요" : formatNumber(skin.cost) + " G";
+        const bonusText = "+" + formatNumber(skin.damageBonus) + " 공격 / 치명 +" + Math.round(skin.critBonus * 100) + "% / 속도 " + (skin.speedBonus >= 0 ? "+" : "") + skin.speedBonus;
+        button.innerHTML =
+          '<span class="weapon-swatch"></span>' +
+          '<span class="weapon-meta"><strong>' + skin.name + '</strong><span>' + bonusText + '</span></span>' +
+          '<span class="weapon-state">' + stateText + '</span>';
+        ui.weaponSkinList.appendChild(button);
+      }
+      ui.skinCountText.textContent = state.ownedSkins.length + "/" + weaponSkins.length;
+      ui.skinHint.textContent = getWeaponSkin().flavor;
     }
 
     function addFloating(text, x, y, color) {
@@ -890,15 +1142,15 @@
         return;
       }
 
-      const before = currentWeapon().name;
+      const beforeTier = currentWeaponTier().name;
       state.gold -= cost;
       state.weaponLevel += 1;
-      const after = currentWeapon().name;
+      const afterTier = currentWeaponTier().name;
       addSparks(canvas.width * 0.28, canvas.height * 0.50, currentWeapon().color, 24);
-      addLog("무기 강화 성공. " + after + " <b>+" + state.weaponLevel + "</b>");
-      if (before !== after) {
-        addLog("무기가 <b>" + after + "</b>로 진화했습니다.");
-        showToast(after + " 획득");
+      addLog("무기 강화 성공. " + currentWeapon().name + " <b>+" + state.weaponLevel + "</b>");
+      if (beforeTier !== afterTier) {
+        addLog("강화 계열이 <b>" + afterTier + "</b>로 진화했습니다.");
+        showToast(afterTier + " 해금");
       } else {
         showToast("무기 +" + state.weaponLevel);
       }
@@ -996,7 +1248,9 @@
         monstersDefeated: state.monstersDefeated,
         stageCleared: state.stageCleared,
         repeatMode: state.repeatMode,
-        autoSave: state.autoSave
+        autoSave: state.autoSave,
+        equippedSkin: state.equippedSkin,
+        ownedSkins: state.ownedSkins
       };
       localStorage.setItem(saveKey, JSON.stringify(data));
       state.lastSave = performance.now();
@@ -1018,6 +1272,13 @@
         state.stageCleared = Boolean(data.stageCleared);
         state.repeatMode = Boolean(data.repeatMode);
         state.autoSave = data.autoSave !== false;
+        state.ownedSkins = Array.isArray(data.ownedSkins)
+          ? data.ownedSkins.filter(id => weaponSkins.some(skin => skin.id === id))
+          : ["iron_sword"];
+        if (!state.ownedSkins.includes("iron_sword")) state.ownedSkins.unshift("iron_sword");
+        state.equippedSkin = weaponSkins.some(skin => skin.id === data.equippedSkin) && state.ownedSkins.includes(data.equippedSkin)
+          ? data.equippedSkin
+          : "iron_sword";
         return true;
       } catch (error) {
         return false;
@@ -1037,6 +1298,8 @@
       state.stageCleared = false;
       state.repeatMode = false;
       state.autoAdvanceAt = 0;
+      state.equippedSkin = "iron_sword";
+      state.ownedSkins = ["iron_sword"];
       state.floating = [];
       state.sparks = [];
       state.monster = makeMonster();
@@ -1072,8 +1335,8 @@
       ui.weaponNameText.style.color = weapon.color;
       ui.weaponLevelText.textContent = "+" + state.weaponLevel;
       ui.weaponUpgradeLevelText.textContent = "+" + state.weaponLevel;
-      ui.weaponFlavor.textContent = weapon.flavor;
-      ui.weaponStats.textContent = "치명타 " + Math.round(critChance() * 100) + "% / 자동공격 " + (attackSpeed() / 1000).toFixed(2) + "초";
+      ui.weaponFlavor.textContent = weapon.flavor + " / 강화 계열: " + weapon.tierName;
+      ui.weaponStats.textContent = "보너스 공격 +" + formatNumber(weapon.damageBonus || 0) + " / 치명타 " + Math.round(critChance() * 100) + "% / 자동공격 " + (attackSpeed() / 1000).toFixed(2) + "초";
       ui.statHpText.textContent = formatNumber(maxHp);
       ui.statDamageText.textContent = formatNumber(baseDamage());
       ui.statCritText.textContent = Math.round(critChance() * 100) + "%";
@@ -1082,16 +1345,31 @@
       ui.weaponCostText.textContent = formatNumber(weaponCost()) + " G";
       ui.trainingLevelText.textContent = "+" + state.training;
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
-      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, baseDamageAt(state.weaponLevel + 1) - baseDamage())) + ", 치명타와 공격 속도 상승";
+      const nextDamage = baseDamageAt(state.weaponLevel + 1);
+      const nextCrit = critChanceAt(state.weaponLevel + 1);
+      const nextSpeed = attackSpeedAt(state.weaponLevel + 1);
+      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ", 치명타 +" + Math.max(1, Math.round((nextCrit - critChance()) * 100)) + "%, 공격속도 " + ((attackSpeed() - nextSpeed) / 1000).toFixed(2) + "초 단축";
       ui.trainText.textContent = "체력 강화 +" + state.training + ". 최대 체력 " + formatNumber(maxHp) + ", 받는 피해 감소";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
       ui.attackBtn.disabled = state.stageCleared;
       ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
+      renderWeaponSkins();
     }
 
     function baseDamageAt(level) {
-      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4);
+      const weapon = getWeaponSkin();
+      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4 + (weapon.damageBonus || 0));
+    }
+
+    function attackSpeedAt(level) {
+      const weapon = getWeaponSkin();
+      return Math.max(340, 980 - level * 24 - Math.floor(Math.sqrt(level) * 8) - (weapon.speedBonus || 0));
+    }
+
+    function critChanceAt(level) {
+      const weapon = getWeaponSkin();
+      return Math.min(0.55, 0.06 + level * 0.012 + Math.sqrt(level) * 0.003 + (weapon.critBonus || 0));
     }
 
     function resizeCanvas() {
@@ -1108,37 +1386,340 @@
     function drawBackground(t) {
       const w = canvas.width;
       const h = canvas.height;
+      const themes = [
+        { skyTop: "#22344c", skyMid: "#172338", ground: "#172823", far: "#35506d", near: "#243a4d", glow: "#f7c948", accent: "#6bd66e", mode: "forest" },
+        { skyTop: "#2d2249", skyMid: "#1b1830", ground: "#251c2c", far: "#5b426a", near: "#362949", glow: "#ff8b4a", accent: "#b99cff", mode: "castle" },
+        { skyTop: "#153d4d", skyMid: "#0e2534", ground: "#142c36", far: "#2b6a78", near: "#214a58", glow: "#5de3ff", accent: "#c6fbff", mode: "crystal" },
+        { skyTop: "#402018", skyMid: "#1d1717", ground: "#2a1d19", far: "#6a3328", near: "#3d2620", glow: "#ff714f", accent: "#ffd166", mode: "volcano" },
+        { skyTop: "#17213a", skyMid: "#10182b", ground: "#141d28", far: "#354b74", near: "#26354d", glow: "#63e6ff", accent: "#ff75d8", mode: "cyber" }
+      ];
+      const theme = themes[Math.floor((state.stage - 1) / 5) % themes.length];
       const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, "#202832");
-      grad.addColorStop(0.58, "#171c22");
-      grad.addColorStop(1, "#101215");
+      grad.addColorStop(0, theme.skyTop);
+      grad.addColorStop(0.55, theme.skyMid);
+      grad.addColorStop(1, "#0c1017");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const moon = ctx.createRadialGradient(w * 0.82, h * 0.17, 0, w * 0.82, h * 0.17, w * 0.18);
+      moon.addColorStop(0, theme.glow);
+      moon.addColorStop(0.24, theme.glow + "88");
+      moon.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = moon;
+      ctx.beginPath();
+      ctx.arc(w * 0.82, h * 0.17, w * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
       ctx.globalAlpha = 0.28;
-      ctx.strokeStyle = "#3c4856";
-      ctx.lineWidth = Math.max(1, w * 0.002);
-      for (let i = 0; i < 10; i++) {
-        const y = h * 0.18 + i * h * 0.055;
+      ctx.fillStyle = "#f8fbff";
+      for (let i = 0; i < 44; i++) {
+        const x = ((i * 97 + Math.sin(t * 0.0002 + i) * 18) % 1000) / 1000 * w;
+        const y = (0.06 + ((i * 53) % 48) / 100) * h;
+        const r = (i % 5 === 0 ? 1.7 : 1) * Math.max(1, w * 0.0014);
+        ctx.globalAlpha = 0.12 + ((i % 7) / 10) * 0.18;
         ctx.beginPath();
-        ctx.moveTo(0, y + Math.sin(t * 0.0007 + i) * 5);
-        ctx.lineTo(w, y + Math.cos(t * 0.0005 + i) * 5);
-        ctx.stroke();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
 
-      ctx.fillStyle = "#20242a";
+      function ridge(yBase, height, color, offset) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(0, yBase);
+        for (let i = 0; i <= 9; i++) {
+          const x = i / 9 * w;
+          const peak = Math.sin(i * 1.7 + offset) * height * 0.28;
+          ctx.lineTo(x, yBase - height * (0.45 + (i % 3) * 0.16) + peak);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ridge(h * 0.60, h * 0.25, theme.far, t * 0.0002);
+      ridge(h * 0.70, h * 0.20, theme.near, t * 0.00035 + 3);
+
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = theme.accent;
+      ctx.lineWidth = Math.max(1, w * 0.002);
+      if (theme.mode === "forest") {
+        for (let i = 0; i < 12; i++) {
+          const x = (i / 11) * w;
+          ctx.beginPath();
+          ctx.moveTo(x, h * 0.72);
+          ctx.lineTo(x - w * 0.035, h * 0.88);
+          ctx.lineTo(x + w * 0.035, h * 0.88);
+          ctx.closePath();
+          ctx.fillStyle = i % 2 ? "#1f4a38" : "#245d40";
+          ctx.fill();
+        }
+      } else if (theme.mode === "castle") {
+        ctx.fillStyle = "rgba(12,14,24,0.58)";
+        for (let i = 0; i < 5; i++) {
+          const x = w * (0.50 + i * 0.065);
+          ctx.fillRect(x, h * (0.49 - (i % 2) * 0.04), w * 0.045, h * 0.23);
+          ctx.beginPath();
+          ctx.moveTo(x, h * (0.49 - (i % 2) * 0.04));
+          ctx.lineTo(x + w * 0.022, h * (0.43 - (i % 2) * 0.04));
+          ctx.lineTo(x + w * 0.045, h * (0.49 - (i % 2) * 0.04));
+          ctx.fill();
+        }
+      } else if (theme.mode === "crystal") {
+        ctx.fillStyle = "rgba(198,251,255,0.28)";
+        for (let i = 0; i < 8; i++) {
+          const x = w * (0.08 + i * 0.12);
+          ctx.beginPath();
+          ctx.moveTo(x, h * 0.78);
+          ctx.lineTo(x + w * 0.025, h * (0.56 + (i % 3) * 0.03));
+          ctx.lineTo(x + w * 0.055, h * 0.78);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (theme.mode === "volcano") {
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = theme.glow;
+        for (let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(w * (0.18 + i * 0.16), h * 0.70);
+          ctx.quadraticCurveTo(w * (0.22 + i * 0.16), h * 0.64, w * (0.24 + i * 0.16), h * 0.54);
+          ctx.stroke();
+        }
+      } else {
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = theme.accent;
+        for (let i = 0; i < 9; i++) {
+          const y = h * (0.25 + i * 0.055);
+          ctx.beginPath();
+          ctx.moveTo(w * 0.05, y);
+          ctx.lineTo(w * 0.92, y + Math.sin(t * 0.001 + i) * h * 0.01);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      const ground = ctx.createLinearGradient(0, h * 0.66, 0, h);
+      ground.addColorStop(0, theme.ground);
+      ground.addColorStop(0.55, "#1b2027");
+      ground.addColorStop(1, "#0b0e11");
+      ctx.fillStyle = ground;
       ctx.beginPath();
-      ctx.ellipse(w * 0.52, h * 0.78, w * 0.42, h * 0.12, 0, 0, Math.PI * 2);
+      ctx.moveTo(0, h * 0.75);
+      ctx.quadraticCurveTo(w * 0.22, h * 0.70, w * 0.48, h * 0.76);
+      ctx.quadraticCurveTo(w * 0.73, h * 0.83, w, h * 0.73);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = "#46515d";
-      ctx.lineWidth = 3;
+
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.beginPath();
+      ctx.ellipse(w * 0.52, h * 0.78, w * 0.42, h * 0.105, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = Math.max(2, w * 0.002);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(247,201,72,0.12)";
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.14;
+      ctx.strokeStyle = theme.accent;
+      for (let i = 0; i < 6; i++) {
+        const y = h * (0.76 + i * 0.023);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.18, y);
+        ctx.quadraticCurveTo(w * 0.52, y + Math.sin(t * 0.001 + i) * 7, w * 0.88, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawEquippedWeapon(t, u, handX, handY, swingProgress, swing, weapon) {
+      const active = state.slashTimer > 0;
+      const angle = active ? -1.42 + swingProgress * 2.25 : (weapon.kind === "bow" ? -0.45 : -0.92);
+      const accent = weapon.accent || weapon.color;
+      const length = weapon.kind === "greatsword" ? 0.37 : weapon.kind === "spear" ? 0.41 : weapon.kind === "staff" ? 0.36 : 0.30;
+      const hiltX = handX + Math.cos(angle) * u * 0.045;
+      const hiltY = handY + Math.sin(angle) * u * 0.045;
+      const tipX = handX + Math.cos(angle) * u * length;
+      const tipY = handY + Math.sin(angle) * u * length;
+      const guardAngle = angle + Math.PI / 2;
+
+      ctx.strokeStyle = "#1b2430";
+      ctx.lineWidth = Math.max(8, u * 0.024);
       ctx.beginPath();
-      ctx.arc(w * 0.86, h * 0.15, w * 0.12, 0, Math.PI * 2);
+      ctx.moveTo(u * 0.045, u * 0.015);
+      ctx.lineTo(handX, handY);
+      ctx.stroke();
+
+      if (active) {
+        ctx.globalAlpha = 0.30 + swing * 0.42;
+        ctx.strokeStyle = weapon.color;
+        ctx.lineWidth = Math.max(9, u * 0.027);
+        ctx.beginPath();
+        ctx.arc(handX, handY, u * (weapon.kind === "greatsword" ? 0.29 : 0.245), -1.55, angle + 0.3);
+        ctx.stroke();
+        ctx.globalAlpha = 0.16 + swing * 0.22;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.012);
+        ctx.beginPath();
+        ctx.arc(handX, handY, u * 0.205, -1.35, angle + 0.16);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = active ? u * 0.018 : u * 0.007;
+
+      if (weapon.kind === "bow") {
+        ctx.strokeStyle = weapon.color;
+        ctx.lineWidth = Math.max(5, u * 0.013);
+        ctx.beginPath();
+        ctx.arc(handX + u * 0.04, handY - u * 0.015, u * 0.145, -1.25, 1.15);
+        ctx.stroke();
+        ctx.strokeStyle = "#ecf7ff";
+        ctx.lineWidth = Math.max(2, u * 0.004);
+        ctx.beginPath();
+        ctx.moveTo(handX + u * 0.085, handY - u * 0.145);
+        ctx.lineTo(handX - u * 0.015 - swing * u * 0.035, handY - u * 0.01);
+        ctx.lineTo(handX + u * 0.115, handY + u * 0.105);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.01);
+        ctx.beginPath();
+        ctx.moveTo(handX - u * 0.005, handY - u * 0.01);
+        ctx.lineTo(handX + u * 0.22, handY - u * 0.055);
+        ctx.stroke();
+      } else if (weapon.kind === "spear") {
+        ctx.strokeStyle = "#2d1d15";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(handX - Math.cos(angle) * u * 0.07, handY - Math.sin(angle) * u * 0.07);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.fillStyle = weapon.color;
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(tipX - Math.cos(angle - 0.34) * u * 0.065, tipY - Math.sin(angle - 0.34) * u * 0.065);
+        ctx.lineTo(tipX - Math.cos(angle) * u * 0.025, tipY - Math.sin(angle) * u * 0.025);
+        ctx.lineTo(tipX - Math.cos(angle + 0.34) * u * 0.065, tipY - Math.sin(angle + 0.34) * u * 0.065);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (weapon.kind === "axe") {
+        ctx.strokeStyle = "#3a2418";
+        ctx.lineWidth = Math.max(6, u * 0.015);
+        ctx.beginPath();
+        ctx.moveTo(handX, handY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.fillStyle = weapon.color;
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.quadraticCurveTo(tipX - Math.cos(guardAngle) * u * 0.095, tipY - Math.sin(guardAngle) * u * 0.095, tipX - Math.cos(angle) * u * 0.10, tipY - Math.sin(angle) * u * 0.10);
+        ctx.quadraticCurveTo(tipX + Math.cos(guardAngle) * u * 0.085, tipY + Math.sin(guardAngle) * u * 0.085, tipX, tipY);
+        ctx.fill();
+        ctx.stroke();
+      } else if (weapon.kind === "staff") {
+        ctx.strokeStyle = "#3a2418";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(handX - Math.cos(angle) * u * 0.06, handY - Math.sin(angle) * u * 0.06);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        const orb = ctx.createRadialGradient(tipX, tipY, u * 0.004, tipX, tipY, u * 0.043);
+        orb.addColorStop(0, "#ffffff");
+        orb.addColorStop(0.45, accent);
+        orb.addColorStop(1, weapon.color);
+        ctx.fillStyle = orb;
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, u * 0.035, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (weapon.kind === "scythe") {
+        ctx.strokeStyle = "#2d1d15";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(handX - Math.cos(angle) * u * 0.07, handY - Math.sin(angle) * u * 0.07);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.strokeStyle = weapon.color;
+        ctx.lineWidth = Math.max(8, u * 0.019);
+        ctx.beginPath();
+        ctx.arc(tipX - Math.cos(angle) * u * 0.035, tipY - Math.sin(angle) * u * 0.035, u * 0.075, angle - 1.8, angle + 0.55);
+        ctx.stroke();
+      } else if (weapon.kind === "twin") {
+        for (const side of [-1, 1]) {
+          const a = angle + side * 0.34;
+          const sx = handX - side * u * 0.04;
+          const sy = handY + side * u * 0.006;
+          const ex = sx + Math.cos(a) * u * 0.21;
+          const ey = sy + Math.sin(a) * u * 0.21;
+          ctx.strokeStyle = weapon.color;
+          ctx.lineWidth = Math.max(5, u * 0.012);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+          ctx.fillStyle = accent;
+          ctx.beginPath();
+          ctx.arc(ex, ey, u * 0.008, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (weapon.kind === "gunblade") {
+        ctx.strokeStyle = "#27313c";
+        ctx.lineWidth = Math.max(8, u * 0.020);
+        ctx.beginPath();
+        ctx.moveTo(handX, handY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.strokeStyle = weapon.color;
+        ctx.lineWidth = Math.max(4, u * 0.010);
+        ctx.beginPath();
+        ctx.moveTo(hiltX, hiltY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.fillRect(hiltX - u * 0.012, hiltY - u * 0.012, u * 0.05, u * 0.018);
+      } else {
+        ctx.strokeStyle = "#2d1d15";
+        ctx.lineWidth = Math.max(5, u * 0.013);
+        ctx.beginPath();
+        ctx.moveTo(handX, handY);
+        ctx.lineTo(hiltX, hiltY);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#d6b45a";
+        ctx.lineWidth = Math.max(3, u * 0.009);
+        ctx.beginPath();
+        ctx.moveTo(hiltX + Math.cos(guardAngle) * u * 0.035, hiltY + Math.sin(guardAngle) * u * 0.035);
+        ctx.lineTo(hiltX - Math.cos(guardAngle) * u * 0.035, hiltY - Math.sin(guardAngle) * u * 0.035);
+        ctx.stroke();
+
+        const bladeGlow = ctx.createLinearGradient(hiltX, hiltY, tipX, tipY);
+        bladeGlow.addColorStop(0, "#f8fbff");
+        bladeGlow.addColorStop(0.55, weapon.color);
+        bladeGlow.addColorStop(1, "#ffffff");
+        ctx.strokeStyle = bladeGlow;
+        ctx.lineWidth = Math.max(weapon.kind === "greatsword" ? 11 : 7, u * (weapon.kind === "greatsword" ? 0.026 : 0.018));
+        ctx.beginPath();
+        ctx.moveTo(hiltX, hiltY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+      }
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, u * 0.010, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -1258,65 +1839,7 @@
 
       const handX = u * 0.072;
       const handY = u * 0.008;
-      const swordAngle = state.slashTimer > 0 ? -1.42 + swingProgress * 2.25 : -0.92;
-      const hiltX = handX + Math.cos(swordAngle) * u * 0.045;
-      const hiltY = handY + Math.sin(swordAngle) * u * 0.045;
-      const tipX = handX + Math.cos(swordAngle) * u * 0.30;
-      const tipY = handY + Math.sin(swordAngle) * u * 0.30;
-      const guardAngle = swordAngle + Math.PI / 2;
-
-      ctx.strokeStyle = "#1b2430";
-      ctx.lineWidth = Math.max(8, u * 0.024);
-      ctx.beginPath();
-      ctx.moveTo(u * 0.045, u * 0.015);
-      ctx.lineTo(handX, handY);
-      ctx.stroke();
-
-      if (state.slashTimer > 0) {
-        ctx.globalAlpha = 0.32 + swing * 0.36;
-        ctx.strokeStyle = weapon.color;
-        ctx.lineWidth = Math.max(9, u * 0.027);
-        ctx.beginPath();
-        ctx.arc(handX, handY, u * 0.245, -1.55, swordAngle + 0.3);
-        ctx.stroke();
-        ctx.globalAlpha = 0.18 + swing * 0.2;
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = Math.max(3, u * 0.01);
-        ctx.beginPath();
-        ctx.arc(handX, handY, u * 0.205, -1.35, swordAngle + 0.16);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      ctx.strokeStyle = "#2d1d15";
-      ctx.lineWidth = Math.max(5, u * 0.013);
-      ctx.beginPath();
-      ctx.moveTo(handX, handY);
-      ctx.lineTo(hiltX, hiltY);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#d6b45a";
-      ctx.lineWidth = Math.max(3, u * 0.009);
-      ctx.beginPath();
-      ctx.moveTo(hiltX + Math.cos(guardAngle) * u * 0.032, hiltY + Math.sin(guardAngle) * u * 0.032);
-      ctx.lineTo(hiltX - Math.cos(guardAngle) * u * 0.032, hiltY - Math.sin(guardAngle) * u * 0.032);
-      ctx.stroke();
-
-      const bladeGlow = ctx.createLinearGradient(hiltX, hiltY, tipX, tipY);
-      bladeGlow.addColorStop(0, "#f8fbff");
-      bladeGlow.addColorStop(0.55, weapon.color);
-      bladeGlow.addColorStop(1, "#ffffff");
-      ctx.strokeStyle = bladeGlow;
-      ctx.lineWidth = Math.max(7, u * 0.018);
-      ctx.beginPath();
-      ctx.moveTo(hiltX, hiltY);
-      ctx.lineTo(tipX, tipY);
-      ctx.stroke();
-
-      ctx.fillStyle = weapon.color;
-      ctx.beginPath();
-      ctx.arc(tipX, tipY, u * 0.011, 0, Math.PI * 2);
-      ctx.fill();
+      drawEquippedWeapon(t, u, handX, handY, swingProgress, swing, weapon);
       ctx.restore();
     }
 
@@ -1327,22 +1850,52 @@
       const monster = state.monster;
       const x = w * 0.64;
       const y = h * 0.61 + Math.sin(t * 0.004 + monster.bob) * 6;
-      const u = (monster.boss ? 1.18 : 1) * Math.min(w, h);
+      const u = (monster.boss ? 1.34 : 1) * Math.min(w, h);
       const hitScale = state.monsterHitTimer > 0 ? 1.045 : 1;
+      const accent = monster.accent || "#f7c948";
+      const pulse = 0.5 + Math.sin(t * 0.006 + monster.bob) * 0.5;
 
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(hitScale, hitScale);
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
-      ctx.fillStyle = "rgba(0,0,0,0.42)";
+
+      const shadow = ctx.createRadialGradient(0, u * 0.20, u * 0.012, 0, u * 0.20, u * 0.19);
+      shadow.addColorStop(0, "rgba(0,0,0,0.52)");
+      shadow.addColorStop(0.62, "rgba(0,0,0,0.34)");
+      shadow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = shadow;
       ctx.beginPath();
-      ctx.ellipse(0, u * 0.20, u * 0.145, u * 0.038, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, u * 0.20, u * 0.18, u * 0.05, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = monster.boss ? 0.24 + pulse * 0.12 : 0.09 + pulse * 0.05;
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.ellipse(0, -u * 0.02, u * (monster.boss ? 0.29 : 0.22), u * (monster.boss ? 0.25 : 0.19), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = monster.boss ? 0.36 : 0.18;
+      for (let i = 0; i < (monster.boss ? 12 : 7); i++) {
+        const angle = i * Math.PI * 2 / (monster.boss ? 12 : 7) + t * 0.0012 + monster.bob;
+        const radius = u * (0.18 + (i % 3) * 0.025 + pulse * 0.012);
+        const px = Math.cos(angle) * radius;
+        const py = Math.sin(angle) * radius * 0.78 - u * 0.015;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(angle + t * 0.001);
+        ctx.fillRect(-u * 0.006, -u * 0.006, u * 0.012, u * 0.012);
+        ctx.restore();
+      }
+      ctx.restore();
 
       ctx.strokeStyle = "#101215";
       ctx.lineWidth = Math.max(3, u * 0.009);
       ctx.fillStyle = monster.color;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = monster.boss ? u * 0.018 : u * 0.006;
 
       if (monster.shape === "slime") {
         const slime = ctx.createRadialGradient(-u * 0.045, -u * 0.04, u * 0.02, 0, u * 0.035, u * 0.17);
@@ -1659,6 +2212,580 @@
         ctx.beginPath();
         ctx.arc(u * 0.135, -u * 0.018, u * 0.012, 0, Math.PI * 2);
         ctx.fill();
+      } else if (monster.shape === "raptor" || monster.shape === "rex") {
+        const heavy = monster.shape === "rex";
+        ctx.fillStyle = "#2b1a14";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.135, u * 0.04);
+        ctx.quadraticCurveTo(-u * 0.25, u * 0.005, -u * 0.215, -u * 0.07);
+        ctx.quadraticCurveTo(-u * 0.105, -u * 0.035, -u * 0.045, u * 0.025);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.135, u * 0.075);
+        ctx.quadraticCurveTo(-u * 0.09, -u * 0.105, u * (heavy ? 0.105 : 0.07), -u * 0.085);
+        ctx.quadraticCurveTo(u * 0.185, -u * 0.035, u * 0.145, u * 0.07);
+        ctx.quadraticCurveTo(u * 0.015, u * 0.155, -u * 0.135, u * 0.075);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.065, -u * 0.08);
+        ctx.lineTo(u * (heavy ? 0.205 : 0.18), -u * 0.12);
+        ctx.lineTo(u * 0.185, -u * 0.035);
+        ctx.lineTo(u * 0.075, u * 0.012);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        for (let i = 0; i < (heavy ? 5 : 4); i++) {
+          ctx.beginPath();
+          ctx.moveTo(-u * (0.07 - i * 0.045), -u * (0.075 + i * 0.004));
+          ctx.lineTo(-u * (0.035 - i * 0.045), -u * 0.145);
+          ctx.lineTo(-u * (0.005 - i * 0.045), -u * 0.065);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.strokeStyle = "#1c120f";
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.055, u * 0.095);
+        ctx.lineTo(-u * 0.095, u * 0.18);
+        ctx.moveTo(u * 0.055, u * 0.088);
+        ctx.lineTo(u * 0.09, u * 0.18);
+        ctx.stroke();
+        ctx.fillStyle = "#12151b";
+        ctx.beginPath();
+        ctx.arc(u * 0.135, -u * 0.075, u * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "fox" || monster.shape === "wolf") {
+        const mech = monster.shape === "wolf";
+        ctx.fillStyle = mech ? "#263040" : "#402817";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.17, u * 0.065);
+        ctx.quadraticCurveTo(-u * 0.10, -u * 0.095, u * 0.095, -u * 0.055);
+        ctx.lineTo(u * 0.17, u * 0.005);
+        ctx.lineTo(u * 0.112, u * 0.085);
+        ctx.quadraticCurveTo(-u * 0.025, u * 0.13, -u * 0.17, u * 0.065);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.07, -u * 0.06);
+        ctx.lineTo(u * 0.17, -u * 0.10);
+        ctx.lineTo(u * 0.208, -u * 0.022);
+        ctx.lineTo(u * 0.108, u * 0.038);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.105, -u * 0.092);
+        ctx.lineTo(u * 0.125, -u * 0.17);
+        ctx.lineTo(u * 0.158, -u * 0.085);
+        ctx.moveTo(u * 0.168, -u * 0.055);
+        ctx.lineTo(u * 0.22, -u * 0.115);
+        ctx.lineTo(u * 0.215, -u * 0.025);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.01);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.145, u * 0.025);
+        ctx.quadraticCurveTo(-u * 0.255, -u * 0.055, -u * 0.185, -u * 0.15);
+        ctx.quadraticCurveTo(-u * 0.075, -u * 0.125, -u * 0.09, -u * 0.035);
+        ctx.stroke();
+        if (mech) {
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = Math.max(2, u * 0.006);
+          ctx.beginPath();
+          ctx.moveTo(-u * 0.08, -u * 0.025);
+          ctx.lineTo(u * 0.055, -u * 0.01);
+          ctx.moveTo(-u * 0.045, u * 0.035);
+          ctx.lineTo(u * 0.09, u * 0.045);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#15171d";
+        ctx.beginPath();
+        ctx.arc(u * 0.14, -u * 0.035, u * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "beetle" || monster.shape === "ankylos") {
+        const dino = monster.shape === "ankylos";
+        ctx.fillStyle = "#17262b";
+        ctx.beginPath();
+        ctx.ellipse(0, u * 0.025, u * 0.155, u * 0.105, dino ? 0.04 : -0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.ellipse(0, -u * 0.025, u * 0.118, u * 0.092, dino ? 0.12 : 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(0, -u * 0.11);
+        ctx.lineTo(0, u * 0.065);
+        for (let i = -2; i <= 2; i++) {
+          ctx.moveTo(i * u * 0.04, -u * 0.085);
+          ctx.lineTo(i * u * 0.03, u * 0.07);
+        }
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * u * 0.04, -u * 0.105);
+          ctx.lineTo(i * u * 0.04 + u * 0.024, -u * 0.155);
+          ctx.lineTo(i * u * 0.04 + u * 0.045, -u * 0.095);
+          ctx.fill();
+          ctx.stroke();
+        }
+        if (dino) {
+          ctx.beginPath();
+          ctx.moveTo(-u * 0.14, u * 0.035);
+          ctx.quadraticCurveTo(-u * 0.25, u * 0.02, -u * 0.22, -u * 0.06);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(u * 0.045, -u * 0.103);
+          ctx.quadraticCurveTo(u * 0.145, -u * 0.175, u * 0.19, -u * 0.08);
+          ctx.quadraticCurveTo(u * 0.145, -u * 0.06, u * 0.095, -u * 0.08);
+          ctx.stroke();
+        }
+      } else if (monster.shape === "dragon" || monster.shape === "dragoon" || monster.shape === "dataDragon") {
+        const data = monster.shape === "dataDragon";
+        ctx.fillStyle = "rgba(17,20,30,0.82)";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.03, -u * 0.03);
+        ctx.lineTo(-u * 0.20, -u * 0.17);
+        ctx.lineTo(-u * 0.16, u * 0.045);
+        ctx.lineTo(-u * 0.055, u * 0.045);
+        ctx.closePath();
+        ctx.moveTo(u * 0.025, -u * 0.032);
+        ctx.lineTo(u * 0.20, -u * 0.17);
+        ctx.lineTo(u * 0.16, u * 0.045);
+        ctx.lineTo(u * 0.055, u * 0.045);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.105, u * 0.075);
+        ctx.quadraticCurveTo(-u * 0.045, -u * 0.115, u * 0.08, -u * 0.095);
+        ctx.lineTo(u * 0.175, -u * 0.035);
+        ctx.lineTo(u * 0.105, u * 0.055);
+        ctx.quadraticCurveTo(0, u * 0.135, -u * 0.105, u * 0.075);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(u * 0.11, -u * 0.082);
+        ctx.lineTo(u * 0.185, -u * 0.145);
+        ctx.moveTo(-u * 0.055, u * 0.065);
+        ctx.quadraticCurveTo(-u * 0.22, u * 0.13, -u * 0.25, -u * 0.015);
+        ctx.stroke();
+        if (data) {
+          ctx.fillStyle = accent;
+          for (let i = 0; i < 5; i++) {
+            ctx.globalAlpha = 0.72 - i * 0.08;
+            ctx.fillRect(-u * 0.19 + i * u * 0.07, -u * (0.18 - i * 0.02), u * 0.022, u * 0.022);
+          }
+          ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = "#081018";
+        ctx.beginPath();
+        ctx.arc(u * 0.085, -u * 0.052, u * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "plant" || monster.shape === "mushroom") {
+        const mushroom = monster.shape === "mushroom";
+        ctx.fillStyle = "#21452a";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.12, u * 0.09);
+        ctx.quadraticCurveTo(-u * 0.105, -u * 0.105, u * 0.02, -u * 0.13);
+        ctx.quadraticCurveTo(u * 0.145, -u * 0.075, u * 0.115, u * 0.085);
+        ctx.quadraticCurveTo(0, u * 0.15, -u * 0.12, u * 0.09);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        if (mushroom) {
+          ctx.beginPath();
+          ctx.ellipse(0, -u * 0.105, u * 0.155, u * 0.072, 0, Math.PI, 0);
+          ctx.lineTo(u * 0.105, -u * 0.045);
+          ctx.quadraticCurveTo(0, -u * 0.005, -u * 0.105, -u * 0.045);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = accent;
+          for (const dot of [[-0.06, -0.09], [0.015, -0.12], [0.075, -0.075]]) {
+            ctx.beginPath();
+            ctx.arc(u * dot[0], u * dot[1], u * 0.014, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else {
+          ctx.fillStyle = accent;
+          for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.ellipse(-u * 0.07 + i * u * 0.045, -u * (0.11 + (i % 2) * 0.02), u * 0.045, u * 0.018, -0.5 + i * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.009);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.085, u * 0.06);
+        ctx.quadraticCurveTo(-u * 0.20, u * 0.11, -u * 0.17, u * 0.19);
+        ctx.moveTo(u * 0.07, u * 0.058);
+        ctx.quadraticCurveTo(u * 0.18, u * 0.12, u * 0.14, u * 0.195);
+        ctx.stroke();
+      } else if (monster.shape === "gearbat" || monster.shape === "bird") {
+        const bird = monster.shape === "bird";
+        ctx.fillStyle = bird ? "#1d3549" : "#241832";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.035, -u * 0.02);
+        ctx.lineTo(-u * 0.215, -u * 0.13);
+        ctx.lineTo(-u * 0.17, u * 0.045);
+        ctx.lineTo(-u * 0.055, u * 0.07);
+        ctx.closePath();
+        ctx.moveTo(u * 0.035, -u * 0.02);
+        ctx.lineTo(u * 0.215, -u * 0.13);
+        ctx.lineTo(u * 0.17, u * 0.045);
+        ctx.lineTo(u * 0.055, u * 0.07);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.075, u * 0.07);
+        ctx.quadraticCurveTo(-u * 0.055, -u * 0.075, 0, -u * 0.115);
+        ctx.quadraticCurveTo(u * 0.08, -u * 0.055, u * 0.075, u * 0.07);
+        ctx.quadraticCurveTo(0, u * 0.14, -u * 0.075, u * 0.07);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        if (bird) {
+          ctx.beginPath();
+          ctx.moveTo(u * 0.025, -u * 0.105);
+          ctx.lineTo(u * 0.105, -u * 0.08);
+          ctx.lineTo(u * 0.025, -u * 0.058);
+          ctx.fill();
+          ctx.stroke();
+          for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * u * 0.032, u * 0.075);
+            ctx.lineTo(i * u * 0.05, u * 0.15);
+            ctx.stroke();
+          }
+        } else {
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = Math.max(2, u * 0.006);
+          for (let i = 0; i < 8; i++) {
+            const a = i * Math.PI / 4;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * u * 0.062, Math.sin(a) * u * 0.062);
+            ctx.lineTo(Math.cos(a) * u * 0.09, Math.sin(a) * u * 0.09);
+            ctx.stroke();
+          }
+          ctx.beginPath();
+          ctx.arc(0, 0, u * 0.068, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (monster.shape === "serpent" || monster.shape === "leviathan") {
+        const leviathan = monster.shape === "leviathan";
+        ctx.strokeStyle = monster.color;
+        ctx.lineWidth = Math.max(18, u * (leviathan ? 0.048 : 0.04));
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.19, u * 0.08);
+        ctx.quadraticCurveTo(-u * 0.08, -u * 0.105, u * 0.06, -u * 0.035);
+        ctx.quadraticCurveTo(u * 0.155, u * 0.015, u * 0.09, u * 0.105);
+        ctx.stroke();
+        ctx.strokeStyle = "#101215";
+        ctx.lineWidth = Math.max(3, u * 0.008);
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.075, -u * 0.052);
+        ctx.lineTo(u * 0.175, -u * 0.088);
+        ctx.lineTo(u * 0.195, -u * 0.018);
+        ctx.lineTo(u * 0.11, u * 0.035);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-u * (0.11 - i * 0.055), -u * (0.01 + i * 0.008));
+          ctx.lineTo(-u * (0.08 - i * 0.055), -u * (0.085 + i * 0.006));
+          ctx.lineTo(-u * (0.045 - i * 0.055), -u * (0.005 + i * 0.008));
+          ctx.fill();
+          ctx.stroke();
+        }
+        if (leviathan) {
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = Math.max(3, u * 0.007);
+          ctx.beginPath();
+          ctx.moveTo(-u * 0.035, u * 0.015);
+          ctx.lineTo(-u * 0.135, u * 0.12);
+          ctx.moveTo(u * 0.025, u * 0.02);
+          ctx.lineTo(u * 0.105, u * 0.14);
+          ctx.stroke();
+        }
+      } else if (monster.shape === "crystal") {
+        ctx.fillStyle = "#1f3342";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.115, u * 0.08);
+        ctx.lineTo(-u * 0.065, -u * 0.085);
+        ctx.lineTo(u * 0.055, -u * 0.105);
+        ctx.lineTo(u * 0.13, u * 0.045);
+        ctx.lineTo(u * 0.035, u * 0.135);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * u * 0.042, -u * 0.065);
+          ctx.lineTo(i * u * 0.042 + u * 0.025, -u * 0.17);
+          ctx.lineTo(i * u * 0.042 + u * 0.055, -u * 0.055);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = accent;
+        ctx.globalAlpha = 0.42;
+        ctx.beginPath();
+        ctx.ellipse(-u * 0.02, -u * 0.015, u * 0.12, u * 0.04, -0.55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (monster.shape === "stag" || monster.shape === "pegasus") {
+        const pegasus = monster.shape === "pegasus";
+        ctx.fillStyle = pegasus ? "#dbe6f5" : "#3d2a1a";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.15, u * 0.075);
+        ctx.quadraticCurveTo(-u * 0.08, -u * 0.075, u * 0.08, -u * 0.055);
+        ctx.quadraticCurveTo(u * 0.155, -u * 0.02, u * 0.135, u * 0.08);
+        ctx.quadraticCurveTo(-u * 0.005, u * 0.13, -u * 0.15, u * 0.075);
+        ctx.fill();
+        ctx.stroke();
+        if (pegasus) {
+          ctx.fillStyle = "rgba(255,255,255,0.78)";
+          ctx.beginPath();
+          ctx.moveTo(-u * 0.04, -u * 0.03);
+          ctx.lineTo(-u * 0.17, -u * 0.15);
+          ctx.lineTo(-u * 0.135, u * 0.04);
+          ctx.closePath();
+          ctx.moveTo(u * 0.02, -u * 0.035);
+          ctx.lineTo(u * 0.18, -u * 0.14);
+          ctx.lineTo(u * 0.12, u * 0.035);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.08, -u * 0.068);
+        ctx.lineTo(u * 0.17, -u * 0.085);
+        ctx.lineTo(u * 0.19, -u * 0.02);
+        ctx.lineTo(u * 0.11, u * 0.02);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(3, u * 0.008);
+        ctx.beginPath();
+        ctx.moveTo(u * 0.13, -u * 0.095);
+        ctx.lineTo(u * 0.105, -u * 0.175);
+        ctx.moveTo(u * 0.13, -u * 0.095);
+        ctx.lineTo(u * 0.185, -u * 0.17);
+        ctx.moveTo(u * 0.16, -u * 0.08);
+        ctx.lineTo(u * 0.23, -u * 0.13);
+        ctx.stroke();
+        ctx.fillStyle = "#15171d";
+        ctx.beginPath();
+        ctx.arc(u * 0.142, -u * 0.052, u * 0.01, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "scorpion") {
+        ctx.fillStyle = "#17222f";
+        ctx.beginPath();
+        ctx.ellipse(0, u * 0.035, u * 0.125, u * 0.075, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.ellipse(u * 0.105, -u * 0.005, u * 0.075, u * 0.055, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(5, u * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.08, -u * 0.02);
+        ctx.quadraticCurveTo(-u * 0.17, -u * 0.16, -u * 0.04, -u * 0.2);
+        ctx.lineTo(u * 0.01, -u * 0.145);
+        ctx.moveTo(u * 0.06, u * 0.015);
+        ctx.lineTo(u * 0.215, -u * 0.08);
+        ctx.moveTo(u * 0.055, u * 0.045);
+        ctx.lineTo(u * 0.225, u * 0.115);
+        ctx.stroke();
+        ctx.fillStyle = "#101215";
+        ctx.beginPath();
+        ctx.arc(u * 0.12, -u * 0.02, u * 0.01, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (monster.shape === "paladin" || monster.shape === "angel" || monster.shape === "demon") {
+        const angel = monster.shape === "angel";
+        const demon = monster.shape === "demon";
+        if (angel || demon) {
+          ctx.fillStyle = angel ? "rgba(255,255,255,0.72)" : "rgba(28,10,38,0.84)";
+          ctx.beginPath();
+          ctx.moveTo(-u * 0.05, -u * 0.02);
+          ctx.lineTo(-u * 0.205, -u * 0.14);
+          ctx.lineTo(-u * 0.15, u * 0.065);
+          ctx.lineTo(-u * 0.055, u * 0.035);
+          ctx.closePath();
+          ctx.moveTo(u * 0.05, -u * 0.02);
+          ctx.lineTo(u * 0.205, -u * 0.14);
+          ctx.lineTo(u * 0.15, u * 0.065);
+          ctx.lineTo(u * 0.055, u * 0.035);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#101722";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.105, u * 0.115);
+        ctx.lineTo(-u * 0.078, -u * 0.065);
+        ctx.lineTo(-u * 0.035, -u * 0.14);
+        ctx.lineTo(u * 0.04, -u * 0.14);
+        ctx.lineTo(u * 0.086, -u * 0.06);
+        ctx.lineTo(u * 0.105, u * 0.115);
+        ctx.lineTo(u * 0.04, u * 0.15);
+        ctx.lineTo(-u * 0.04, u * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.07, -u * 0.035);
+        ctx.lineTo(0, -u * 0.088);
+        ctx.lineTo(u * 0.075, -u * 0.035);
+        ctx.lineTo(u * 0.055, u * 0.092);
+        ctx.lineTo(-u * 0.055, u * 0.092);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.01);
+        ctx.beginPath();
+        if (angel) {
+          ctx.arc(0, -u * 0.17, u * 0.052, 0, Math.PI * 2);
+        } else if (demon) {
+          ctx.moveTo(-u * 0.04, -u * 0.13);
+          ctx.lineTo(-u * 0.085, -u * 0.205);
+          ctx.moveTo(u * 0.04, -u * 0.13);
+          ctx.lineTo(u * 0.092, -u * 0.205);
+        } else {
+          ctx.moveTo(-u * 0.135, -u * 0.005);
+          ctx.lineTo(-u * 0.195, u * 0.11);
+          ctx.moveTo(u * 0.135, -u * 0.005);
+          ctx.lineTo(u * 0.195, u * 0.11);
+        }
+        ctx.stroke();
+      } else if (monster.shape === "chimera") {
+        ctx.fillStyle = "#2b2416";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.155, u * 0.078);
+        ctx.quadraticCurveTo(-u * 0.075, -u * 0.09, u * 0.095, -u * 0.055);
+        ctx.quadraticCurveTo(u * 0.18, u * 0.01, u * 0.12, u * 0.09);
+        ctx.quadraticCurveTo(-u * 0.02, u * 0.145, -u * 0.155, u * 0.078);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        for (const head of [[0.08, -0.09], [0.155, -0.035], [0.02, -0.025]]) {
+          ctx.beginPath();
+          ctx.moveTo(u * head[0], u * head[1]);
+          ctx.lineTo(u * (head[0] + 0.075), u * (head[1] - 0.025));
+          ctx.lineTo(u * (head[0] + 0.085), u * (head[1] + 0.045));
+          ctx.lineTo(u * (head[0] + 0.015), u * (head[1] + 0.05));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(4, u * 0.009);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.12, u * 0.035);
+        ctx.quadraticCurveTo(-u * 0.24, -u * 0.085, -u * 0.16, -u * 0.16);
+        ctx.moveTo(-u * 0.035, -u * 0.055);
+        ctx.lineTo(-u * 0.07, -u * 0.13);
+        ctx.moveTo(u * 0.055, -u * 0.07);
+        ctx.lineTo(u * 0.085, -u * 0.145);
+        ctx.stroke();
+      } else if (monster.shape === "mecha") {
+        ctx.fillStyle = "#222936";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.13, u * 0.09);
+        ctx.lineTo(-u * 0.08, -u * 0.085);
+        ctx.lineTo(u * 0.055, -u * 0.12);
+        ctx.lineTo(u * 0.16, -u * 0.035);
+        ctx.lineTo(u * 0.11, u * 0.095);
+        ctx.lineTo(0, u * 0.145);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.moveTo(u * 0.04, -u * 0.1);
+        ctx.lineTo(u * 0.18, -u * 0.13);
+        ctx.lineTo(u * 0.205, -u * 0.055);
+        ctx.lineTo(u * 0.09, -u * 0.015);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.075, -u * 0.025);
+        ctx.lineTo(u * 0.07, -u * 0.045);
+        ctx.moveTo(-u * 0.052, u * 0.045);
+        ctx.lineTo(u * 0.095, u * 0.045);
+        ctx.moveTo(u * 0.14, -u * 0.088);
+        ctx.lineTo(u * 0.185, -u * 0.065);
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.fillRect(u * 0.108, -u * 0.073, u * 0.045, u * 0.012);
+      } else if (monster.shape === "clown") {
+        ctx.fillStyle = "#1b1428";
+        ctx.beginPath();
+        ctx.ellipse(0, u * 0.035, u * 0.125, u * 0.11, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = monster.color;
+        ctx.beginPath();
+        ctx.arc(0, -u * 0.075, u * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.06, -u * 0.13);
+        ctx.lineTo(-u * 0.015, -u * 0.215);
+        ctx.lineTo(u * 0.035, -u * 0.13);
+        ctx.moveTo(u * 0.01, -u * 0.13);
+        ctx.lineTo(u * 0.075, -u * 0.205);
+        ctx.lineTo(u * 0.09, -u * 0.11);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#101215";
+        ctx.beginPath();
+        ctx.ellipse(-u * 0.032, -u * 0.08, u * 0.014, u * 0.02, 0.4, 0, Math.PI * 2);
+        ctx.ellipse(u * 0.038, -u * 0.083, u * 0.014, u * 0.02, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#f7f2df";
+        ctx.lineWidth = Math.max(2, u * 0.006);
+        ctx.beginPath();
+        ctx.quadraticCurveTo(-u * 0.005, -u * 0.025, u * 0.055, -u * 0.04);
+        ctx.stroke();
       } else {
         ctx.fillStyle = "#101722";
         ctx.beginPath();
@@ -1698,6 +2825,126 @@
         ctx.stroke();
       }
 
+      ctx.shadowBlur = 0;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(-u * 0.045, -u * 0.058, u * 0.08, u * 0.028, -0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.18 + pulse * 0.08;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(2, u * 0.005);
+
+      const machineShapes = new Set(["gearbat", "wolf", "mecha", "dataDragon", "paladin"]);
+      const dragonShapes = new Set(["raptor", "rex", "dragon", "dragoon", "dataDragon", "wyvern", "leviathan"]);
+      const holyShapes = new Set(["angel", "pegasus", "stag", "paladin", "dragoon"]);
+      const darkShapes = new Set(["demon", "hound", "clown", "chimera"]);
+      const insectShapes = new Set(["beetle", "mantis", "scorpion", "ankylos"]);
+      const aquaticShapes = new Set(["serpent", "leviathan", "tentacle"]);
+      const natureShapes = new Set(["plant", "mushroom", "crystal"]);
+
+      if (machineShapes.has(monster.shape)) {
+        ctx.globalAlpha = 0.42;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.085, -u * 0.035);
+        ctx.lineTo(-u * 0.025, -u * 0.035);
+        ctx.lineTo(-u * 0.002, -u * 0.012);
+        ctx.lineTo(u * 0.075, -u * 0.012);
+        ctx.moveTo(-u * 0.06, u * 0.045);
+        ctx.lineTo(u * 0.02, u * 0.045);
+        ctx.lineTo(u * 0.046, u * 0.078);
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        for (const node of [[-0.085, -0.035], [0.075, -0.012], [0.046, 0.078]]) {
+          ctx.beginPath();
+          ctx.arc(u * node[0], u * node[1], u * 0.008, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      if (dragonShapes.has(monster.shape)) {
+        ctx.globalAlpha = 0.34;
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.105, -u * 0.02);
+        ctx.quadraticCurveTo(-u * 0.035, -u * 0.135, u * 0.075, -u * 0.09);
+        ctx.moveTo(-u * 0.075, u * 0.045);
+        ctx.quadraticCurveTo(0, -u * 0.015, u * 0.115, u * 0.02);
+        ctx.stroke();
+      }
+
+      if (holyShapes.has(monster.shape)) {
+        ctx.globalAlpha = 0.48;
+        ctx.beginPath();
+        ctx.arc(0, -u * 0.17, u * 0.068, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let i = 0; i < 6; i++) {
+          const a = i * Math.PI / 3 + t * 0.0009;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * u * 0.092, -u * 0.17 + Math.sin(a) * u * 0.092);
+          ctx.lineTo(Math.cos(a) * u * 0.122, -u * 0.17 + Math.sin(a) * u * 0.122);
+          ctx.stroke();
+        }
+      }
+
+      if (darkShapes.has(monster.shape)) {
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = "#ff4f6d";
+        ctx.beginPath();
+        ctx.ellipse(-u * 0.03, -u * 0.045, u * 0.018, u * 0.007, 0.1, 0, Math.PI * 2);
+        ctx.ellipse(u * 0.04, -u * 0.045, u * 0.018, u * 0.007, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.20;
+        ctx.strokeStyle = "#ff4f6d";
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.12, u * 0.10);
+        ctx.quadraticCurveTo(-u * 0.18, u * 0.02, -u * 0.10, -u * 0.05);
+        ctx.moveTo(u * 0.12, u * 0.09);
+        ctx.quadraticCurveTo(u * 0.19, u * 0.00, u * 0.09, -u * 0.06);
+        ctx.stroke();
+      }
+
+      if (insectShapes.has(monster.shape)) {
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.32;
+        ctx.strokeStyle = accent;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * u * 0.035, -u * 0.09);
+          ctx.lineTo(i * u * 0.025, u * 0.085);
+          ctx.stroke();
+        }
+      }
+
+      if (aquaticShapes.has(monster.shape)) {
+        ctx.globalAlpha = 0.36;
+        ctx.fillStyle = "#d8fbff";
+        for (let i = 0; i < 5; i++) {
+          const bx = -u * 0.13 + i * u * 0.065;
+          const by = -u * (0.13 + ((i + Math.floor(t * 0.002)) % 3) * 0.018);
+          ctx.beginPath();
+          ctx.arc(bx, by, u * (0.008 + i * 0.0015), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      if (natureShapes.has(monster.shape)) {
+        ctx.globalAlpha = 0.42;
+        ctx.fillStyle = accent;
+        for (let i = 0; i < 4; i++) {
+          const a = monster.bob + t * 0.001 + i * Math.PI / 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * u * 0.14, -u * 0.02 + Math.sin(a) * u * 0.10);
+          ctx.lineTo(Math.cos(a + 0.4) * u * 0.16, -u * 0.02 + Math.sin(a + 0.4) * u * 0.12);
+          ctx.lineTo(Math.cos(a - 0.4) * u * 0.16, -u * 0.02 + Math.sin(a - 0.4) * u * 0.12);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
       if (monster.shape === "bat") {
         ctx.fillStyle = "#101215";
         ctx.beginPath();
@@ -1707,6 +2954,24 @@
       }
 
       if (monster.boss) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.36 + pulse * 0.14;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = Math.max(3, u * 0.007);
+        ctx.setLineDash([u * 0.026, u * 0.018]);
+        ctx.beginPath();
+        ctx.ellipse(0, -u * 0.015, u * 0.245, u * 0.205, t * 0.0008, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 0.24 + pulse * 0.12;
+        ctx.beginPath();
+        ctx.ellipse(0, -u * 0.015, u * 0.30, u * 0.245, -t * 0.00055, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = u * 0.018;
         ctx.fillStyle = "#f7c948";
         ctx.strokeStyle = "#3b2608";
         ctx.lineWidth = Math.max(2, u * 0.006);
@@ -1718,6 +2983,16 @@
         ctx.lineTo(u * 0.075, -u * 0.17);
         ctx.lineTo(u * 0.052, -u * 0.145);
         ctx.lineTo(-u * 0.055, -u * 0.145);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.moveTo(0, -u * 0.202);
+        ctx.lineTo(u * 0.018, -u * 0.176);
+        ctx.lineTo(0, -u * 0.151);
+        ctx.lineTo(-u * 0.018, -u * 0.176);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -1828,6 +3103,11 @@
 
     canvas.addEventListener("pointerdown", () => attack(true));
     ui.attackBtn.addEventListener("click", () => attack(true));
+    ui.weaponSkinList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-skin-id]");
+      if (!button) return;
+      buyOrEquipWeaponSkin(button.dataset.skinId);
+    });
     ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
     ui.trainBtn.addEventListener("click", train);
     ui.nextBtn.addEventListener("click", nextStage);
@@ -1846,6 +3126,7 @@
     window.addEventListener("keydown", (event) => {
       if (event.code === "Space") {
         event.preventDefault();
+        if (event.repeat) return;
         attack(true);
       }
       if (event.key.toLowerCase() === "u") {
