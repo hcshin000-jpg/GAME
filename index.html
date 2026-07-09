@@ -83,7 +83,7 @@
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
       gap: 6px;
     }
 
@@ -224,7 +224,7 @@
 
     .shop {
       display: grid;
-      grid-template-rows: auto auto auto 1fr auto;
+      grid-template-rows: auto auto auto auto 1fr auto;
       gap: 7px;
       padding: 9px;
       min-height: 456px;
@@ -319,10 +319,16 @@
         #20262d;
     }
 
+    .armor-armory {
+      background:
+        linear-gradient(135deg, rgba(98,216,146,0.10), transparent 42%),
+        #20262d;
+    }
+
     .armory-grid {
       display: grid;
       gap: 6px;
-      max-height: 245px;
+      max-height: 188px;
       overflow: auto;
       padding-right: 2px;
     }
@@ -384,6 +390,17 @@
       transform: rotate(35deg);
     }
 
+    .armor-card .weapon-swatch::after {
+      left: 7px;
+      top: 6px;
+      width: 20px;
+      height: 22px;
+      border-radius: 7px 7px 12px 12px;
+      background: rgba(255,255,255,0.68);
+      clip-path: polygon(50% 0, 92% 16%, 84% 68%, 50% 100%, 16% 68%, 8% 16%);
+      transform: none;
+    }
+
     .weapon-meta {
       display: grid;
       gap: 3px;
@@ -432,6 +449,25 @@
       font-size: 12px;
       line-height: 1.2;
       white-space: nowrap;
+    }
+
+    .stage-select-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .stage-select-row select {
+      min-width: 0;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
+      color: var(--text);
+      border-radius: 8px;
+      font-weight: 800;
+      outline: none;
     }
 
     .upgrade-title span:last-child {
@@ -625,7 +661,6 @@
     <section class="stats" aria-label="게임 현황">
       <div class="stat"><span>스테이지</span><strong id="stageText">1</strong></div>
       <div class="stat"><span>골드</span><strong id="goldText">0</strong></div>
-      <div class="stat"><span>공격력</span><strong id="damageText">0</strong></div>
       <div class="stat"><span>무기</span><strong id="weaponText">낡은 검 +0</strong></div>
       <div class="stat"><span>최고 기록</span><strong id="bestText">1 단계</strong></div>
     </section>
@@ -652,8 +687,8 @@
         </div>
       </div>
 
-      <aside class="shop" aria-label="강화 상점">
-        <h2>강화 상점</h2>
+      <aside class="shop" aria-label="상점">
+        <h2>상점</h2>
         <div class="weapon-box">
           <div class="weapon-name">
             <span id="weaponNameText">낡은 검</span>
@@ -670,18 +705,36 @@
             <div class="stat-line"><span>공격력</span><strong id="statDamageText">13</strong></div>
             <div class="stat-line"><span>치명타</span><strong id="statCritText">5%</strong></div>
             <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.95초</strong></div>
-            <div class="stat-line"><span>진행 모드</span><strong id="statModeText">도전</strong></div>
+            <div class="stat-line"><span>받는 피해 감소</span><strong id="statGuardText">0%</strong></div>
           </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-head">스테이지 선택</div>
+          <div class="stage-select-row">
+            <select id="stageSelect" aria-label="이동할 스테이지"></select>
+            <button id="stageJumpBtn" class="btn blue" type="button">이동</button>
+          </div>
+          <div class="mini" id="stageSelectHint">최고 기록 이하 단계로 이동할 수 있습니다.</div>
         </div>
 
         <div class="upgrades">
           <div class="upgrade armory">
             <div class="upgrade-title">
-              <span class="upgrade-heading">무기 보관함 <span id="skinCountText" class="level-badge">1/12</span></span>
-              <span>골드 구매</span>
+              <span class="upgrade-heading">무기 스킨 상점 <span id="skinCountText" class="level-badge">1/50</span></span>
+              <span>5단계마다 해금</span>
             </div>
-            <div class="mini" id="skinHint">검, 창, 활, 도끼, 마법 무기 등을 구매하고 장착할 수 있습니다.</div>
+            <div class="mini" id="skinHint">치명타와 공격속도는 무기 스킨으로 상승합니다.</div>
             <div id="weaponSkinList" class="armory-grid"></div>
+          </div>
+
+          <div class="upgrade armory armor-armory">
+            <div class="upgrade-title">
+              <span class="upgrade-heading">방어구 스킨 상점 <span id="armorSkinCountText" class="level-badge">1/50</span></span>
+              <span>5단계마다 해금</span>
+            </div>
+            <div class="mini" id="armorSkinHint">받는 피해 감소는 방어구 스킨으로 상승합니다.</div>
+            <div id="armorSkinList" class="armory-grid"></div>
           </div>
 
           <div class="upgrade">
@@ -689,7 +742,7 @@
               <span class="upgrade-heading">무기 강화 <span id="weaponUpgradeLevelText" class="level-badge">+0</span></span>
               <span id="weaponCostText">0 G</span>
             </div>
-            <div class="mini" id="weaponUpgradeText">공격력과 치명타 확률이 상승합니다.</div>
+            <div class="mini" id="weaponUpgradeText">공격력이 상승합니다.</div>
             <button id="upgradeWeaponBtn" class="btn primary" type="button">강화하기</button>
           </div>
 
@@ -698,7 +751,7 @@
               <span class="upgrade-heading">체력 강화 <span id="trainingLevelText" class="level-badge">+0</span></span>
               <span id="trainCostText">0 G</span>
             </div>
-            <div class="mini" id="trainText">최대 체력과 받는 피해 감소가 상승합니다.</div>
+            <div class="mini" id="trainText">체력이 상승합니다.</div>
             <button id="trainBtn" class="btn green" type="button">강화하기</button>
           </div>
         </div>
@@ -725,7 +778,6 @@
     const ui = {
       stageText: document.getElementById("stageText"),
       goldText: document.getElementById("goldText"),
-      damageText: document.getElementById("damageText"),
       weaponText: document.getElementById("weaponText"),
       bestText: document.getElementById("bestText"),
       monsterNameText: document.getElementById("monsterNameText"),
@@ -742,12 +794,18 @@
       weaponSkinList: document.getElementById("weaponSkinList"),
       skinCountText: document.getElementById("skinCountText"),
       skinHint: document.getElementById("skinHint"),
+      armorSkinList: document.getElementById("armorSkinList"),
+      armorSkinCountText: document.getElementById("armorSkinCountText"),
+      armorSkinHint: document.getElementById("armorSkinHint"),
       weaponUpgradeLevelText: document.getElementById("weaponUpgradeLevelText"),
       statHpText: document.getElementById("statHpText"),
       statDamageText: document.getElementById("statDamageText"),
       statCritText: document.getElementById("statCritText"),
       statSpeedText: document.getElementById("statSpeedText"),
-      statModeText: document.getElementById("statModeText"),
+      statGuardText: document.getElementById("statGuardText"),
+      stageSelect: document.getElementById("stageSelect"),
+      stageJumpBtn: document.getElementById("stageJumpBtn"),
+      stageSelectHint: document.getElementById("stageSelectHint"),
       weaponCostText: document.getElementById("weaponCostText"),
       weaponUpgradeText: document.getElementById("weaponUpgradeText"),
       trainingLevelText: document.getElementById("trainingLevelText"),
@@ -775,20 +833,119 @@
       { level: 30, name: "용왕의 칼날", color: "#d7b4ff", flavor: "오래된 왕국의 무기. 공격마다 폭발이 일어납니다." }
     ];
 
-    const weaponSkins = [
-      { id: "iron_sword", kind: "sword", name: "훈련용 검", cost: 0, minLevel: 0, color: "#c0c8d2", accent: "#f8fbff", damageBonus: 0, critBonus: 0, speedBonus: 0, flavor: "가장 기본적인 검. 모든 강화의 기준입니다." },
-      { id: "storm_spear", kind: "spear", name: "폭풍 장창", cost: 850, minLevel: 3, color: "#7fd6ff", accent: "#e8fbff", damageBonus: 8, critBonus: 0.018, speedBonus: 26, flavor: "찌르는 순간 바람이 말려들어 연속 타격이 쉬워집니다." },
-      { id: "star_bow", kind: "bow", name: "별추적 활", cost: 1800, minLevel: 6, color: "#b99cff", accent: "#fff08a", damageBonus: 13, critBonus: 0.045, speedBonus: 38, flavor: "빛나는 화살이 약점을 따라 휘어집니다." },
-      { id: "lava_axe", kind: "axe", name: "용암 전투도끼", cost: 3400, minLevel: 9, color: "#ff714f", accent: "#ffd36e", damageBonus: 28, critBonus: 0.018, speedBonus: -18, flavor: "느리지만 한 번 맞으면 갑옷째로 갈라집니다." },
-      { id: "moon_twins", kind: "twin", name: "월광 쌍검", cost: 5600, minLevel: 12, color: "#dce7ff", accent: "#88f4ff", damageBonus: 18, critBonus: 0.04, speedBonus: 92, flavor: "두 개의 잔상이 번갈아 베며 빈틈을 만듭니다." },
-      { id: "thunder_staff", kind: "staff", name: "천둥 마도지팡이", cost: 9200, minLevel: 15, color: "#f4d44d", accent: "#7cf7ff", damageBonus: 36, critBonus: 0.055, speedBonus: 32, flavor: "마력 구체가 모일 때마다 번개가 튀어오릅니다." },
-      { id: "abyss_scythe", kind: "scythe", name: "심연 낫", cost: 14500, minLevel: 18, color: "#9a68ff", accent: "#ff6bd6", damageBonus: 48, critBonus: 0.065, speedBonus: 24, flavor: "검은 궤적이 적의 체력을 도려냅니다." },
-      { id: "gear_gunblade", kind: "gunblade", name: "기계식 총검", cost: 22500, minLevel: 21, color: "#9fb2c8", accent: "#63e6ff", damageBonus: 62, critBonus: 0.05, speedBonus: 78, flavor: "베는 순간 압축된 에너지 탄이 함께 폭발합니다." },
-      { id: "sun_greatsword", kind: "greatsword", name: "태양 대검", cost: 36000, minLevel: 25, color: "#ffd166", accent: "#ffffff", damageBonus: 86, critBonus: 0.04, speedBonus: -34, flavor: "무겁지만 화면을 가르는 금빛 칼날이 압도적입니다." },
-      { id: "nebula_bow", kind: "bow", name: "성운 장궁", cost: 58000, minLevel: 30, color: "#8aa0ff", accent: "#ffdc7a", damageBonus: 108, critBonus: 0.09, speedBonus: 64, flavor: "성운을 응축한 화살이 보스의 약점을 꿰뚫습니다." },
-      { id: "void_blade", kind: "sword", name: "공허 절단검", cost: 92000, minLevel: 35, color: "#6c4dff", accent: "#ff75d8", damageBonus: 145, critBonus: 0.075, speedBonus: 74, flavor: "공간이 접히듯 칼날의 잔상이 늦게 따라옵니다." },
-      { id: "dragon_trident", kind: "spear", name: "용왕 삼지창", cost: 145000, minLevel: 40, color: "#5de3ff", accent: "#fff08a", damageBonus: 190, critBonus: 0.095, speedBonus: 94, flavor: "세 갈래 창끝에서 용의 포효가 터져 나옵니다." }
+    const weaponSkinNames = [
+      "훈련용 검", "청동 사냥검", "늑대 송곳창", "초승달 장궁", "붉은 전투도끼",
+      "은빛 쌍검", "비전 지팡이", "흑요석 낫", "기계식 총검", "별가루 대검",
+      "폭풍 장창", "루비 레이피어", "사파이어 활", "용암 가르개", "월광 쌍월도",
+      "천둥 마도봉", "심연 절단낫", "크롬 건블레이드", "태양 대검", "서리 삼지창",
+      "성운 장궁", "유성 전투도끼", "공허 절단검", "불멸자의 창", "황금 사냥활",
+      "백은 대도", "그림자 쌍검", "빛나는 성창", "폭룡 전투도끼", "천공 마법봉",
+      "영겁의 낫", "오로라 총검", "제국 대검", "혈월 장창", "신성 장궁",
+      "차원 절단검", "혜성 쌍검", "뇌신의 창", "봉인된 흑낫", "용왕 삼지창",
+      "별심장 대검", "태초의 활", "혼돈 총검", "여명의 성검", "창공의 심판창",
+      "황혼의 쌍검", "절대영도의 낫", "은하수 마도봉", "무한의 대검", "슄렐리아의 증명"
     ];
+
+    const weaponSkinKinds = ["sword", "sword", "spear", "bow", "axe", "twin", "staff", "scythe", "gunblade", "greatsword"];
+    const weaponSkinPalettes = [
+      ["#c0c8d2", "#f8fbff"], ["#b78a52", "#ffe1a3"], ["#7fd6ff", "#e8fbff"], ["#b99cff", "#fff08a"], ["#ff714f", "#ffd36e"],
+      ["#dce7ff", "#88f4ff"], ["#f4d44d", "#7cf7ff"], ["#9a68ff", "#ff6bd6"], ["#9fb2c8", "#63e6ff"], ["#ffd166", "#ffffff"],
+      ["#5de3ff", "#fff08a"], ["#ff6c9d", "#ffd7e8"], ["#6ea8ff", "#dceaff"], ["#ff5a38", "#ffe071"], ["#c6d2ff", "#86f7ff"],
+      ["#f7df4f", "#9ffcff"], ["#7247ff", "#ff7bd8"], ["#b8c8db", "#60f0ff"], ["#ffc857", "#fff7c2"], ["#8fd6ff", "#f5fdff"],
+      ["#8aa0ff", "#ffdc7a"], ["#ff9b54", "#f7c948"], ["#6c4dff", "#ff75d8"], ["#c4ffe7", "#ffffff"], ["#ffd85a", "#fff3a6"],
+      ["#e4edf7", "#8af7ff"], ["#a88cff", "#ff8adc"], ["#e8fbff", "#86f7ff"], ["#ff4f4f", "#ffd166"], ["#7fd6ff", "#d7faff"],
+      ["#8f64ff", "#ff6bd6"], ["#7fd8ff", "#ffffff"], ["#e6edf7", "#ffd166"], ["#e24d72", "#ffe08a"], ["#fff1a8", "#ffffff"],
+      ["#7a52ff", "#66fff2"], ["#d7f0ff", "#fff08a"], ["#f4d44d", "#7cf7ff"], ["#5a3d9f", "#ff4f6d"], ["#5de3ff", "#fff08a"],
+      ["#aab0ff", "#ffe07a"], ["#9be8ff", "#fff4b5"], ["#a5b3c7", "#ff64c8"], ["#fff2cf", "#f7c948"], ["#86e7ff", "#ffffff"],
+      ["#c4a2ff", "#ff8adc"], ["#80f0ff", "#e8fbff"], ["#d7b4ff", "#7cf7ff"], ["#fff0a6", "#ffffff"], ["#fffcdf", "#8dfff2"]
+    ];
+
+    const weaponSkinFlavorByKind = {
+      sword: "검신이 선명하게 빛나며 치명타 감각을 끌어올립니다.",
+      spear: "긴 리치와 날카로운 창끝이 빠른 연속 공격을 돕습니다.",
+      bow: "화살이 약점을 따라 휘어져 치명타 기회를 넓힙니다.",
+      axe: "묵직한 일격으로 기본 공격 보너스가 크게 붙습니다.",
+      twin: "두 칼날의 잔상이 공격 템포를 빠르게 만듭니다.",
+      staff: "마력 구체가 모일 때마다 공격 흐름이 가벼워집니다.",
+      scythe: "휘어진 궤적이 적의 빈틈을 길게 베어냅니다.",
+      gunblade: "칼날과 에너지 탄이 동시에 터져 속도와 치명타를 보탭니다.",
+      greatsword: "거대한 검격이 느껴질 만큼 강한 보너스 공격을 더합니다."
+    };
+
+    const weaponSkins = weaponSkinNames.map((name, index) => {
+      const progress = index / (weaponSkinNames.length - 1);
+      const kind = weaponSkinKinds[index % weaponSkinKinds.length];
+      const palette = weaponSkinPalettes[index % weaponSkinPalettes.length];
+      return {
+        id: "weapon_skin_" + String(index + 1).padStart(2, "0"),
+        kind,
+        name,
+        cost: index === 0 ? 0 : Math.floor(360 * Math.pow(1.145, index) * (1 + index * 0.028)),
+        minStage: index === 0 ? 1 : index * 5,
+        color: palette[0],
+        accent: palette[1],
+        damageBonus: Math.floor(Math.pow(index, 1.45) * 7 + index * 4),
+        critBonus: Number((0.05 + progress * 0.95).toFixed(4)),
+        speedBonus: Math.round(progress * 850),
+        flavor: weaponSkinFlavorByKind[kind]
+      };
+    });
+
+    const legacyWeaponSkinIds = {
+      iron_sword: "weapon_skin_01",
+      storm_spear: "weapon_skin_05",
+      star_bow: "weapon_skin_09",
+      lava_axe: "weapon_skin_14",
+      moon_twins: "weapon_skin_18",
+      thunder_staff: "weapon_skin_23",
+      abyss_scythe: "weapon_skin_27",
+      gear_gunblade: "weapon_skin_32",
+      sun_greatsword: "weapon_skin_36",
+      nebula_bow: "weapon_skin_41",
+      void_blade: "weapon_skin_45",
+      dragon_trident: "weapon_skin_50"
+    };
+
+    const armorSkinNames = [
+      "낡은 가죽 갑옷", "모험가 조끼", "청동 흉갑", "사슬 수호복", "철비늘 갑옷",
+      "푸른 파수복", "붉은 전투갑", "은빛 견갑", "수호자 판금", "바람 망토",
+      "수정 흉갑", "늑대문장 갑옷", "황금 가죽갑", "서리 방패복", "용암 판금갑",
+      "월광 로브", "번개 전투복", "비전 수호복", "암흑 망토", "태양 기사갑",
+      "해룡 비늘갑", "별가루 갑주", "기계식 장갑복", "성기사 판금", "폭풍 갑옷",
+      "공허 수호복", "고대룬 갑주", "백은 왕갑", "심연 전투복", "용왕 갑주",
+      "천공 수호갑", "여명 로브", "사자심장 갑주", "유성 방호복", "흑요석 판금",
+      "성운 갑옷", "제국 근위갑", "청룡 비늘갑", "적룡 전투갑", "빛의 성갑",
+      "차원 수호복", "별심장 방패복", "신성한 왕갑", "황혼 기사갑", "절대영도 갑주",
+      "무한 방호복", "은하수 성갑", "창세의 판금", "영원의 수호복", "최후의 왕관갑"
+    ];
+
+    const armorSkinPalettes = [
+      ["#8398ad", "#f6fbff"], ["#8b6f55", "#e7c491"], ["#b78a52", "#ffe1a3"], ["#9fb2c8", "#dceaff"], ["#738899", "#b9f8ff"],
+      ["#4fb7ff", "#d8fbff"], ["#ff714f", "#ffd36e"], ["#d8e2ef", "#7be7ff"], ["#d7b4ff", "#f6fbff"], ["#8fe1c2", "#e8fbff"],
+      ["#8edcff", "#ffffff"], ["#8f6cff", "#ff657a"], ["#d8aa48", "#fff0a6"], ["#8fd6ff", "#f5fdff"], ["#ff7e50", "#ffd37a"],
+      ["#dce7ff", "#88f4ff"], ["#f4d44d", "#7cf7ff"], ["#9a68ff", "#ff6bd6"], ["#533d78", "#ff75d8"], ["#ffd166", "#ffffff"],
+      ["#53cfff", "#d8fbff"], ["#9fa8ff", "#fff08a"], ["#8ba7c9", "#63e6ff"], ["#f7f2df", "#ffe68a"], ["#77d6ff", "#fff6a8"],
+      ["#6c4dff", "#66fff2"], ["#a8e85f", "#f1ffb8"], ["#e4edf7", "#fff0a6"], ["#653b9f", "#ff4f6d"], ["#5de3ff", "#fff08a"],
+      ["#86e7ff", "#ffffff"], ["#fff2cf", "#f7c948"], ["#f2f6ff", "#ffe27c"], ["#ff9b54", "#f7c948"], ["#5f6170", "#cbd6e4"],
+      ["#8aa0ff", "#ffdc7a"], ["#b8c8db", "#ffe08a"], ["#5de3ff", "#7cffd4"], ["#f24d38", "#ffcf5c"], ["#fffcdf", "#8dfff2"],
+      ["#7a52ff", "#66fff2"], ["#aab0ff", "#ffe07a"], ["#fff1a8", "#ffffff"], ["#c4a2ff", "#ff8adc"], ["#80f0ff", "#e8fbff"],
+      ["#d7b4ff", "#7cf7ff"], ["#9be8ff", "#fff4b5"], ["#fffcdf", "#f7c948"], ["#f7f2df", "#7cf7ff"], ["#ffffff", "#ffe68a"]
+    ];
+
+    const armorSkins = armorSkinNames.map((name, index) => {
+      const progress = index / (armorSkinNames.length - 1);
+      const palette = armorSkinPalettes[index % armorSkinPalettes.length];
+      return {
+        id: "armor_skin_" + String(index + 1).padStart(2, "0"),
+        name,
+        cost: index === 0 ? 0 : Math.floor(330 * Math.pow(1.14, index) * (1 + index * 0.026)),
+        minStage: index === 0 ? 1 : index * 5,
+        color: palette[0],
+        accent: palette[1],
+        guardBonus: Number((progress * 0.5).toFixed(4)),
+        flavor: "보호막이 안정되어 받는 피해를 줄입니다."
+      };
+    });
 
     const monsterTypes = [
       { name: "불씨 랩터", color: "#ff8b4a", accent: "#ffd166", shape: "raptor" },
@@ -868,8 +1025,10 @@
       monster: null,
       recentMonsters: [],
       recentMonsterShapes: [],
-      equippedSkin: "iron_sword",
-      ownedSkins: ["iron_sword"]
+      equippedSkin: "weapon_skin_01",
+      ownedSkins: ["weapon_skin_01"],
+      equippedArmor: "armor_skin_01",
+      ownedArmors: ["armor_skin_01"]
     };
 
     function formatNumber(value) {
@@ -885,6 +1044,38 @@
 
     function ownsWeaponSkin(id) {
       return state.ownedSkins.includes(id);
+    }
+
+    function getArmorSkin(id = state.equippedArmor) {
+      return armorSkins.find(skin => skin.id === id) || armorSkins[0];
+    }
+
+    function ownsArmorSkin(id) {
+      return state.ownedArmors.includes(id);
+    }
+
+    function normalizeWeaponSkinId(id) {
+      return legacyWeaponSkinIds[id] || id;
+    }
+
+    function normalizeOwnedWeaponSkins(ids) {
+      const source = Array.isArray(ids) ? ids : [];
+      const normalized = [];
+      for (const rawId of source) {
+        const id = normalizeWeaponSkinId(rawId);
+        if (weaponSkins.some(skin => skin.id === id) && !normalized.includes(id)) {
+          normalized.push(id);
+        }
+      }
+      if (!normalized.includes(weaponSkins[0].id)) normalized.unshift(weaponSkins[0].id);
+      return normalized;
+    }
+
+    function normalizeOwnedArmorSkins(ids) {
+      const source = Array.isArray(ids) ? ids : [];
+      const normalized = source.filter(id => armorSkins.some(skin => skin.id === id));
+      if (!normalized.includes(armorSkins[0].id)) normalized.unshift(armorSkins[0].id);
+      return Array.from(new Set(normalized));
     }
 
     function currentWeaponTier() {
@@ -908,14 +1099,27 @@
       };
     }
 
+    function currentArmor() {
+      return getArmorSkin();
+    }
+
+    function attackSpeedForSkin(skin) {
+      return Math.max(100, 950 - (skin.speedBonus || 0));
+    }
+
     function attackSpeed() {
       const weapon = getWeaponSkin();
-      return Math.max(340, 980 - state.weaponLevel * 24 - Math.floor(Math.sqrt(state.weaponLevel) * 8) - (weapon.speedBonus || 0));
+      return attackSpeedForSkin(weapon);
     }
 
     function critChance() {
       const weapon = getWeaponSkin();
-      return Math.min(0.55, 0.06 + state.weaponLevel * 0.012 + Math.sqrt(state.weaponLevel) * 0.003 + (weapon.critBonus || 0));
+      return Math.min(1, weapon.critBonus || 0);
+    }
+
+    function damageReduction() {
+      const armor = currentArmor();
+      return Math.min(0.5, armor.guardBonus || 0);
     }
 
     function playerMaxHp() {
@@ -1013,11 +1217,12 @@
     function buyOrEquipWeaponSkin(id) {
       const skin = getWeaponSkin(id);
       if (!skin) return;
-      if (state.weaponLevel < skin.minLevel) {
-        showToast("무기 +" + skin.minLevel + "부터 장착 가능합니다.");
+      const owned = ownsWeaponSkin(id);
+      if (!owned && state.bestStage < skin.minStage) {
+        showToast(skin.minStage + "단계부터 구매 가능합니다.");
         return;
       }
-      if (!ownsWeaponSkin(id)) {
+      if (!owned) {
         if (state.gold < skin.cost) {
           showToast("골드가 부족합니다.");
           return;
@@ -1034,21 +1239,24 @@
     }
 
     function renderWeaponSkins() {
+      const renderKey = state.bestStage + "|" + state.equippedSkin + "|" + state.ownedSkins.join(",");
+      if (renderWeaponSkins.renderKey === renderKey) return;
+      renderWeaponSkins.renderKey = renderKey;
       ui.weaponSkinList.innerHTML = "";
       for (const skin of weaponSkins) {
         const owned = ownsWeaponSkin(skin.id);
         const equipped = state.equippedSkin === skin.id;
-        const levelLocked = state.weaponLevel < skin.minLevel;
+        const locked = !owned && state.bestStage < skin.minStage;
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "weapon-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (levelLocked ? " locked" : "");
+        button.className = "weapon-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (locked ? " locked" : "");
         button.dataset.skinId = skin.id;
-        button.disabled = levelLocked;
+        button.disabled = locked;
         button.style.setProperty("--weapon-color", "linear-gradient(135deg, " + skin.color + ", " + skin.accent + ")");
         button.style.setProperty("--weapon-glow", skin.accent);
 
-        const stateText = equipped ? "장착중" : owned ? "장착" : levelLocked ? "+" + skin.minLevel + " 필요" : formatNumber(skin.cost) + " G";
-        const bonusText = "+" + formatNumber(skin.damageBonus) + " 공격 / 치명 +" + Math.round(skin.critBonus * 100) + "% / 속도 " + (skin.speedBonus >= 0 ? "+" : "") + skin.speedBonus;
+        const stateText = equipped ? "장착중" : owned ? "장착" : locked ? skin.minStage + "단계" : formatNumber(skin.cost) + " G";
+        const bonusText = "+" + formatNumber(skin.damageBonus) + " 공격 / 치명 " + Math.round(skin.critBonus * 100) + "% / 공속 " + (attackSpeedForSkin(skin) / 1000).toFixed(2) + "초";
         button.innerHTML =
           '<span class="weapon-swatch"></span>' +
           '<span class="weapon-meta"><strong>' + skin.name + '</strong><span>' + bonusText + '</span></span>' +
@@ -1057,6 +1265,59 @@
       }
       ui.skinCountText.textContent = state.ownedSkins.length + "/" + weaponSkins.length;
       ui.skinHint.textContent = getWeaponSkin().flavor;
+    }
+
+    function buyOrEquipArmorSkin(id) {
+      const skin = getArmorSkin(id);
+      if (!skin) return;
+      const owned = ownsArmorSkin(id);
+      if (!owned && state.bestStage < skin.minStage) {
+        showToast(skin.minStage + "단계부터 구매 가능합니다.");
+        return;
+      }
+      if (!owned) {
+        if (state.gold < skin.cost) {
+          showToast("골드가 부족합니다.");
+          return;
+        }
+        state.gold -= skin.cost;
+        state.ownedArmors.push(id);
+        addLog("<b>" + skin.name + "</b> 구매 완료. 방어구를 장착했습니다.");
+      }
+      state.equippedArmor = id;
+      addSparks(canvas.width * 0.28, canvas.height * 0.50, skin.accent, 22);
+      showToast(skin.name + " 장착");
+      saveGame();
+      updateUI();
+    }
+
+    function renderArmorSkins() {
+      const renderKey = state.bestStage + "|" + state.equippedArmor + "|" + state.ownedArmors.join(",");
+      if (renderArmorSkins.renderKey === renderKey) return;
+      renderArmorSkins.renderKey = renderKey;
+      ui.armorSkinList.innerHTML = "";
+      for (const skin of armorSkins) {
+        const owned = ownsArmorSkin(skin.id);
+        const equipped = state.equippedArmor === skin.id;
+        const locked = !owned && state.bestStage < skin.minStage;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "weapon-card armor-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (locked ? " locked" : "");
+        button.dataset.armorId = skin.id;
+        button.disabled = locked;
+        button.style.setProperty("--weapon-color", "linear-gradient(135deg, " + skin.color + ", " + skin.accent + ")");
+        button.style.setProperty("--weapon-glow", skin.accent);
+
+        const stateText = equipped ? "장착중" : owned ? "장착" : locked ? skin.minStage + "단계" : formatNumber(skin.cost) + " G";
+        const bonusText = "받는 피해 감소 " + Math.round(skin.guardBonus * 100) + "%";
+        button.innerHTML =
+          '<span class="weapon-swatch"></span>' +
+          '<span class="weapon-meta"><strong>' + skin.name + '</strong><span>' + bonusText + '</span></span>' +
+          '<span class="weapon-state">' + stateText + '</span>';
+        ui.armorSkinList.appendChild(button);
+      }
+      ui.armorSkinCountText.textContent = state.ownedArmors.length + "/" + armorSkins.length;
+      ui.armorSkinHint.textContent = currentArmor().name + " / 받는 피해 감소 " + Math.round(damageReduction() * 100) + "%";
     }
 
     function addFloating(text, x, y, color) {
@@ -1104,7 +1365,7 @@
       if (state.stageCleared || state.playerHp <= 0 || !state.monster) return;
       if (now - state.lastMonsterAttack < 1220) return;
       state.lastMonsterAttack = now;
-      const guard = Math.min(0.42, state.training * 0.012);
+      const guard = damageReduction();
       const damage = Math.max(1, Math.floor(state.monster.attack * (1 - guard) * (0.86 + Math.random() * 0.26)));
       state.playerHp = Math.max(0, state.playerHp - damage);
       state.playerHitTimer = 140;
@@ -1182,8 +1443,8 @@
       }
       state.gold -= cost;
       state.training += 1;
-      state.playerHp = playerMaxHp();
-      addLog("체력 강화 완료. 최대 체력과 방어력이 상승했습니다.");
+      state.playerHp = Math.min(state.playerHp, playerMaxHp());
+      addLog("체력 강화 완료. 체력이 상승했습니다.");
       showToast("체력 강화 +" + state.training);
       saveGame();
       updateUI();
@@ -1256,6 +1517,49 @@
       updateUI();
     }
 
+    function renderStageSelect() {
+      const maxStage = Math.max(1, state.bestStage);
+      if (ui.stageSelect.dataset.maxStage !== String(maxStage)) {
+        ui.stageSelect.innerHTML = "";
+        for (let stage = 1; stage <= maxStage; stage++) {
+          const option = document.createElement("option");
+          option.value = String(stage);
+          option.textContent = stage + " 단계";
+          ui.stageSelect.appendChild(option);
+        }
+        ui.stageSelect.dataset.maxStage = String(maxStage);
+      }
+      ui.stageSelect.value = String(Math.min(state.stage, maxStage));
+      ui.stageSelectHint.textContent = "최고 기록 " + maxStage + "단계까지 이동할 수 있습니다.";
+    }
+
+    function jumpToSelectedStage() {
+      const targetStage = Math.floor(Number(ui.stageSelect.value));
+      if (!Number.isFinite(targetStage) || targetStage < 1 || targetStage > state.bestStage) {
+        showToast("선택할 수 없는 단계입니다.");
+        renderStageSelect();
+        return;
+      }
+      if (targetStage === state.stage && !state.stageCleared) {
+        showToast("이미 " + targetStage + "단계입니다.");
+        return;
+      }
+
+      state.stage = targetStage;
+      state.monstersDefeated = 0;
+      state.stageCleared = false;
+      state.repeatMode = targetStage < state.bestStage;
+      state.autoAdvanceAt = 0;
+      state.monsterAttackTimer = 0;
+      state.playerHp = Math.max(1, Math.min(state.playerHp, playerMaxHp()));
+      state.monster = makeMonster();
+      state.lastMonsterAttack = performance.now();
+      addLog("<b>" + targetStage + "단계</b>로 이동했습니다." + (state.repeatMode ? " 반복 모드로 유지됩니다." : ""));
+      showToast(targetStage + "단계 이동");
+      saveGame();
+      updateUI();
+    }
+
     function saveGame() {
       const data = {
         stage: state.stage,
@@ -1269,7 +1573,9 @@
         repeatMode: state.repeatMode,
         autoSave: state.autoSave,
         equippedSkin: state.equippedSkin,
-        ownedSkins: state.ownedSkins
+        ownedSkins: state.ownedSkins,
+        equippedArmor: state.equippedArmor,
+        ownedArmors: state.ownedArmors
       };
       localStorage.setItem(saveKey, JSON.stringify(data));
       state.lastSave = performance.now();
@@ -1291,13 +1597,15 @@
         state.stageCleared = Boolean(data.stageCleared);
         state.repeatMode = Boolean(data.repeatMode);
         state.autoSave = data.autoSave !== false;
-        state.ownedSkins = Array.isArray(data.ownedSkins)
-          ? data.ownedSkins.filter(id => weaponSkins.some(skin => skin.id === id))
-          : ["iron_sword"];
-        if (!state.ownedSkins.includes("iron_sword")) state.ownedSkins.unshift("iron_sword");
-        state.equippedSkin = weaponSkins.some(skin => skin.id === data.equippedSkin) && state.ownedSkins.includes(data.equippedSkin)
-          ? data.equippedSkin
-          : "iron_sword";
+        state.ownedSkins = normalizeOwnedWeaponSkins(data.ownedSkins);
+        const equippedSkin = normalizeWeaponSkinId(data.equippedSkin);
+        state.equippedSkin = weaponSkins.some(skin => skin.id === equippedSkin) && state.ownedSkins.includes(equippedSkin)
+          ? equippedSkin
+          : weaponSkins[0].id;
+        state.ownedArmors = normalizeOwnedArmorSkins(data.ownedArmors);
+        state.equippedArmor = armorSkins.some(skin => skin.id === data.equippedArmor) && state.ownedArmors.includes(data.equippedArmor)
+          ? data.equippedArmor
+          : armorSkins[0].id;
         return true;
       } catch (error) {
         return false;
@@ -1318,8 +1626,10 @@
       state.repeatMode = false;
       state.autoAdvanceAt = 0;
       state.monsterAttackTimer = 0;
-      state.equippedSkin = "iron_sword";
-      state.ownedSkins = ["iron_sword"];
+      state.equippedSkin = weaponSkins[0].id;
+      state.ownedSkins = [weaponSkins[0].id];
+      state.equippedArmor = armorSkins[0].id;
+      state.ownedArmors = [armorSkins[0].id];
       state.floating = [];
       state.sparks = [];
       state.monster = makeMonster();
@@ -1338,7 +1648,6 @@
 
       ui.stageText.textContent = state.stage + " 단계" + (state.repeatMode ? " 반복" : "");
       ui.goldText.textContent = formatNumber(state.gold) + " G";
-      ui.damageText.textContent = formatNumber(baseDamage());
       ui.weaponText.textContent = weapon.name + " +" + state.weaponLevel;
       ui.bestText.textContent = state.bestStage + " 단계";
       ui.monsterNameText.textContent = monster ? monster.name : "대기 중";
@@ -1361,36 +1670,26 @@
       ui.statDamageText.textContent = formatNumber(baseDamage());
       ui.statCritText.textContent = Math.round(critChance() * 100) + "%";
       ui.statSpeedText.textContent = (attackSpeed() / 1000).toFixed(2) + "초";
-      ui.statModeText.textContent = state.repeatMode ? "반복" : "도전";
+      ui.statGuardText.textContent = Math.round(damageReduction() * 100) + "%";
       ui.weaponCostText.textContent = formatNumber(weaponCost()) + " G";
       ui.trainingLevelText.textContent = "+" + state.training;
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
       const nextDamage = baseDamageAt(state.weaponLevel + 1);
-      const nextCrit = critChanceAt(state.weaponLevel + 1);
-      const nextSpeed = attackSpeedAt(state.weaponLevel + 1);
-      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ", 치명타 +" + Math.max(1, Math.round((nextCrit - critChance()) * 100)) + "%, 공격속도 " + ((attackSpeed() - nextSpeed) / 1000).toFixed(2) + "초 단축";
-      ui.trainText.textContent = "체력 강화 +" + state.training + ". 최대 체력 " + formatNumber(maxHp) + ", 받는 피해 감소";
+      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ". 치명타와 공격속도는 무기 스킨에서 상승합니다.";
+      ui.trainText.textContent = "체력 강화 +" + state.training + ". 강화할수록 체력이 상승합니다.";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
       ui.attackBtn.disabled = state.stageCleared;
       ui.attackBtn.textContent = "공격";
       ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
       renderWeaponSkins();
+      renderArmorSkins();
+      renderStageSelect();
     }
 
     function baseDamageAt(level) {
       const weapon = getWeaponSkin();
       return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4 + (weapon.damageBonus || 0));
-    }
-
-    function attackSpeedAt(level) {
-      const weapon = getWeaponSkin();
-      return Math.max(340, 980 - level * 24 - Math.floor(Math.sqrt(level) * 8) - (weapon.speedBonus || 0));
-    }
-
-    function critChanceAt(level) {
-      const weapon = getWeaponSkin();
-      return Math.min(0.55, 0.06 + level * 0.012 + Math.sqrt(level) * 0.003 + (weapon.critBonus || 0));
     }
 
     function resizeCanvas() {
@@ -1752,11 +2051,12 @@
       const y = h * 0.61 + Math.sin(t * 0.004) * 4;
       const hitOffset = state.playerHitTimer > 0 ? Math.sin(t * 0.08) * 6 : 0;
       const weapon = currentWeapon();
+      const equippedArmor = currentArmor();
       const swingProgress = state.slashTimer > 0 ? 1 - state.slashTimer / 240 : 0;
       const swing = state.slashTimer > 0 ? Math.sin(swingProgress * Math.PI) : 0;
       const armor = ctx.createLinearGradient(-u * 0.04, -u * 0.14, u * 0.07, u * 0.12);
-      armor.addColorStop(0, "#f6fbff");
-      armor.addColorStop(0.45, "#8398ad");
+      armor.addColorStop(0, equippedArmor.accent || "#f6fbff");
+      armor.addColorStop(0.45, equippedArmor.color || "#8398ad");
       armor.addColorStop(1, "#27313c");
 
       ctx.save();
@@ -1808,7 +2108,7 @@
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = "#42546a";
+      ctx.fillStyle = equippedArmor.color || "#42546a";
       ctx.beginPath();
       ctx.moveTo(-u * 0.065, -u * 0.035);
       ctx.lineTo(-u * 0.12, u * 0.005);
@@ -3260,8 +3560,14 @@
       if (!button) return;
       buyOrEquipWeaponSkin(button.dataset.skinId);
     });
+    ui.armorSkinList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-armor-id]");
+      if (!button) return;
+      buyOrEquipArmorSkin(button.dataset.armorId);
+    });
     ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
     ui.trainBtn.addEventListener("click", train);
+    ui.stageJumpBtn.addEventListener("click", jumpToSelectedStage);
     ui.nextBtn.addEventListener("click", nextStage);
     ui.farmBtn.addEventListener("click", farmStage);
     ui.saveBtn.addEventListener("click", () => {
