@@ -863,6 +863,14 @@
       monsterAttackAccent: "#f7c948",
       monsterAttackShape: "",
       monsterAttackBoss: false,
+      manualClickHistory: [],
+      manualBlockUntil: 0,
+      lastManualAttack: 0,
+      lastPointerMoveAt: 0,
+      lastPointerX: 0,
+      lastPointerY: 0,
+      inputGuardStrikes: 0,
+      lastInputGuardToast: 0,
       floating: [],
       sparks: [],
       monster: null,
@@ -1003,6 +1011,94 @@
       ui.toast.classList.add("show");
       clearTimeout(showToast.timer);
       showToast.timer = setTimeout(() => ui.toast.classList.remove("show"), 1600);
+    }
+
+    function notePointerMove(event) {
+      state.lastPointerMoveAt = performance.now();
+      state.lastPointerX = Number(event.clientX) || 0;
+      state.lastPointerY = Number(event.clientY) || 0;
+    }
+
+    function triggerInputGuard(reason, seconds = 10) {
+      const now = performance.now();
+      state.inputGuardStrikes += 1;
+      const duration = Math.min(30000, seconds * 1000 + state.inputGuardStrikes * 2500);
+      state.manualBlockUntil = Math.max(state.manualBlockUntil, now + duration);
+      state.manualClickHistory = [];
+      state.lastInputGuardToast = now;
+      const blockSeconds = Math.ceil((state.manualBlockUntil - now) / 1000);
+      showToast("오토클릭 의심: " + blockSeconds + "초 차단");
+      addLog("비정상 클릭 패턴이 감지되어 수동 공격을 <b>" + blockSeconds + "초</b> 차단했습니다. (" + reason + ")");
+      updateManualAttackButton(now);
+    }
+
+    function isManualInputBlocked(now = performance.now()) {
+      if (now < state.manualBlockUntil) {
+        if (now - state.lastInputGuardToast > 1200) {
+          state.lastInputGuardToast = now;
+          showToast("수동 공격 차단 중: " + Math.ceil((state.manualBlockUntil - now) / 1000) + "초");
+        }
+        return true;
+      }
+      return false;
+    }
+
+    function isAutoClickPattern(event) {
+      const now = performance.now();
+      if (isManualInputBlocked(now)) return true;
+      if (event && event.isTrusted === false) {
+        triggerInputGuard("스크립트 클릭", 18);
+        return true;
+      }
+
+      const x = Number(event && event.clientX) || 0;
+      const y = Number(event && event.clientY) || 0;
+      const target = event && event.currentTarget && event.currentTarget.id ? event.currentTarget.id : "manual";
+      const lastGap = now - state.lastManualAttack;
+      if (state.lastManualAttack && lastGap < 70) {
+        triggerInputGuard("비정상 고속 클릭", 8);
+        return true;
+      }
+
+      state.manualClickHistory.push({ t: now, x, y, target });
+      state.manualClickHistory = state.manualClickHistory.filter(item => now - item.t <= 2200);
+      const recent = state.manualClickHistory.filter(item => now - item.t <= 1600);
+      if (recent.length < 8) {
+        state.lastManualAttack = now;
+        return false;
+      }
+
+      const intervals = [];
+      for (let i = 1; i < recent.length; i++) intervals.push(recent[i].t - recent[i - 1].t);
+      const avg = intervals.reduce((sum, value) => sum + value, 0) / intervals.length;
+      const variance = intervals.reduce((sum, value) => sum + Math.pow(value - avg, 2), 0) / intervals.length;
+      const std = Math.sqrt(variance);
+      const base = recent[0];
+      const maxDistance = recent.reduce((max, item) => Math.max(max, Math.hypot(item.x - base.x, item.y - base.y)), 0);
+      const noRecentMove = now - state.lastPointerMoveAt > 900;
+      const veryRegular = avg < 175 && std < 18;
+      const veryFast = recent.length >= 11 && avg < 125;
+      const sameSpot = maxDistance < 10;
+      const denseSameSpot = state.manualClickHistory.length >= 14 && sameSpot;
+
+      if ((veryRegular && (sameSpot || noRecentMove)) || veryFast || denseSameSpot) {
+        triggerInputGuard(veryFast ? "초고속 반복 클릭" : "일정한 반복 클릭", veryFast ? 14 : 10);
+        return true;
+      }
+
+      state.lastManualAttack = now;
+      return false;
+    }
+
+    function handleManualAttack(event) {
+      if (isAutoClickPattern(event)) return;
+      attack(true);
+    }
+
+    function updateManualAttackButton(now = performance.now()) {
+      const blocked = now < state.manualBlockUntil;
+      ui.attackBtn.disabled = state.stageCleared || blocked;
+      ui.attackBtn.textContent = blocked ? "클릭 차단 " + Math.ceil((state.manualBlockUntil - now) / 1000) + "초" : "공격";
     }
 
     function buyOrEquipWeaponSkin(id) {
@@ -1313,6 +1409,10 @@
       state.repeatMode = false;
       state.autoAdvanceAt = 0;
       state.monsterAttackTimer = 0;
+      state.manualClickHistory = [];
+      state.manualBlockUntil = 0;
+      state.lastManualAttack = 0;
+      state.inputGuardStrikes = 0;
       state.equippedSkin = "iron_sword";
       state.ownedSkins = ["iron_sword"];
       state.floating = [];
@@ -1367,7 +1467,7 @@
       ui.trainText.textContent = "체력 강화 +" + state.training + ". 최대 체력 " + formatNumber(maxHp) + ", 받는 피해 감소";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
-      ui.attackBtn.disabled = state.stageCleared;
+      updateManualAttackButton();
       ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
       renderWeaponSkins();
     }
@@ -3232,6 +3332,7 @@
       state.playerHitTimer = Math.max(0, state.playerHitTimer - dt);
       state.monsterHitTimer = Math.max(0, state.monsterHitTimer - dt);
       state.monsterAttackTimer = Math.max(0, state.monsterAttackTimer - dt);
+      updateManualAttackButton(now);
 
       drawBackground(now);
       drawPlayer(now);
@@ -3247,8 +3348,9 @@
       requestAnimationFrame(loop);
     }
 
-    canvas.addEventListener("pointerdown", () => attack(true));
-    ui.attackBtn.addEventListener("click", () => attack(true));
+    window.addEventListener("pointermove", notePointerMove, { passive: true });
+    canvas.addEventListener("pointerdown", handleManualAttack);
+    ui.attackBtn.addEventListener("click", handleManualAttack);
     ui.weaponSkinList.addEventListener("click", (event) => {
       const button = event.target.closest("[data-skin-id]");
       if (!button) return;
