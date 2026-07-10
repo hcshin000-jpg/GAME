@@ -939,7 +939,6 @@
     };
 
     const saveKey = "steel-expedition-save-v1";
-    const skinResetVersion = 2;
     const weaponTiers = [
       { level: 0, name: "낡은 검", color: "#c0c8d2", flavor: "나무 손잡이가 삐걱거리지만 첫 사냥에는 충분합니다." },
       { level: 5, name: "강철 검", color: "#b9d6ff", flavor: "묵직한 날이 몬스터의 가죽을 가릅니다." },
@@ -1237,9 +1236,12 @@
       const armor = currentArmor();
       return Math.min(0.5, armor.guardBonus || 0);
     }
-
     function playerMaxHp() {
-      return Math.floor(160 + state.training * 34 + Math.pow(state.training, 1.22) * 8);
+      return playerMaxHpAt(state.training);
+    }
+
+    function playerMaxHpAt(level) {
+      return Math.floor(160 + level * 34 + Math.pow(level, 1.22) * 8);
     }
 
     function baseDamage() {
@@ -1636,6 +1638,7 @@
     function renderStageSelect() {
       const maxStage = Math.max(1, state.bestStage);
       if (ui.stageSelect.dataset.maxStage !== String(maxStage)) {
+        const selectedValue = ui.stageSelect.value;
         ui.stageSelect.innerHTML = "";
         for (let stage = 1; stage <= maxStage; stage++) {
           const option = document.createElement("option");
@@ -1644,12 +1647,20 @@
           ui.stageSelect.appendChild(option);
         }
         ui.stageSelect.dataset.maxStage = String(maxStage);
+        if (selectedValue && Number(selectedValue) <= maxStage) {
+          ui.stageSelect.value = selectedValue;
+        }
       }
-      ui.stageSelect.value = String(Math.min(state.stage, maxStage));
+      const shouldPreserveSelection = ui.stageSelect.dataset.preserveSelection === "true";
+      const selectedStage = Math.floor(Number(ui.stageSelect.value));
+      if (!shouldPreserveSelection || !Number.isFinite(selectedStage) || selectedStage < 1 || selectedStage > maxStage) {
+        ui.stageSelect.value = String(Math.min(state.stage, maxStage));
+      }
       ui.stageSelectHint.textContent = "최고 기록 " + maxStage + "단계까지 이동할 수 있습니다.";
     }
 
     function jumpToSelectedStage() {
+      ui.stageSelect.dataset.preserveSelection = "";
       const targetStage = Math.floor(Number(ui.stageSelect.value));
       if (!Number.isFinite(targetStage) || targetStage < 1 || targetStage > state.bestStage) {
         showToast("선택할 수 없는 단계입니다.");
@@ -1688,7 +1699,6 @@
         stageCleared: state.stageCleared,
         repeatMode: state.repeatMode,
         autoSave: state.autoSave,
-        skinResetVersion,
         equippedSkin: state.equippedSkin,
         ownedSkins: state.ownedSkins,
         equippedArmor: state.equippedArmor,
@@ -1714,27 +1724,17 @@
         state.stageCleared = Boolean(data.stageCleared);
         state.repeatMode = Boolean(data.repeatMode);
         state.autoSave = data.autoSave !== false;
-        let migratedSkins = false;
-        if (Number(data.skinResetVersion) !== skinResetVersion) {
-          state.ownedSkins = [weaponSkins[0].id];
-          state.equippedSkin = weaponSkins[0].id;
-          state.ownedArmors = [armorSkins[0].id];
-          state.equippedArmor = armorSkins[0].id;
-          migratedSkins = true;
-        } else {
-          state.ownedSkins = normalizeOwnedWeaponSkins(data.ownedSkins).filter(id => getWeaponSkin(id).minStage <= state.bestStage);
-          if (!state.ownedSkins.includes(weaponSkins[0].id)) state.ownedSkins.unshift(weaponSkins[0].id);
-          const equippedSkin = normalizeWeaponSkinId(data.equippedSkin);
-          state.equippedSkin = weaponSkins.some(skin => skin.id === equippedSkin && skin.minStage <= state.bestStage) && state.ownedSkins.includes(equippedSkin)
-            ? equippedSkin
-            : weaponSkins[0].id;
-          state.ownedArmors = normalizeOwnedArmorSkins(data.ownedArmors).filter(id => getArmorSkin(id).minStage <= state.bestStage);
-          if (!state.ownedArmors.includes(armorSkins[0].id)) state.ownedArmors.unshift(armorSkins[0].id);
-          state.equippedArmor = armorSkins.some(skin => skin.id === data.equippedArmor && skin.minStage <= state.bestStage) && state.ownedArmors.includes(data.equippedArmor)
-            ? data.equippedArmor
-            : armorSkins[0].id;
-        }
-        if (migratedSkins) saveGame();
+        state.ownedSkins = normalizeOwnedWeaponSkins(data.ownedSkins).filter(id => getWeaponSkin(id).minStage <= state.bestStage);
+        if (!state.ownedSkins.includes(weaponSkins[0].id)) state.ownedSkins.unshift(weaponSkins[0].id);
+        const equippedSkin = normalizeWeaponSkinId(data.equippedSkin);
+        state.equippedSkin = weaponSkins.some(skin => skin.id === equippedSkin && skin.minStage <= state.bestStage) && state.ownedSkins.includes(equippedSkin)
+          ? equippedSkin
+          : weaponSkins[0].id;
+        state.ownedArmors = normalizeOwnedArmorSkins(data.ownedArmors).filter(id => getArmorSkin(id).minStage <= state.bestStage);
+        if (!state.ownedArmors.includes(armorSkins[0].id)) state.ownedArmors.unshift(armorSkins[0].id);
+        state.equippedArmor = armorSkins.some(skin => skin.id === data.equippedArmor && skin.minStage <= state.bestStage) && state.ownedArmors.includes(data.equippedArmor)
+          ? data.equippedArmor
+          : armorSkins[0].id;
         return true;
       } catch (error) {
         return false;
@@ -1799,8 +1799,9 @@
       ui.trainingLevelText.textContent = "+" + state.training;
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
       const nextDamage = baseDamageAt(state.weaponLevel + 1);
+      const nextHp = playerMaxHpAt(state.training + 1);
       ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ". 치명타와 공격속도는 무기 스킨에서 상승합니다.";
-      ui.trainText.textContent = "체력 강화 +" + state.training + ". 강화할수록 체력이 상승합니다.";
+      ui.trainText.textContent = "체력 +" + formatNumber(nextHp - maxHp) + ". 현재 체력은 유지됩니다.";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
       ui.attackBtn.disabled = state.stageCleared;
@@ -3691,6 +3692,22 @@
     });
     ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
     ui.trainBtn.addEventListener("click", train);
+    ui.stageSelect.addEventListener("focus", () => {
+      ui.stageSelect.dataset.preserveSelection = "true";
+    });
+    ui.stageSelect.addEventListener("input", () => {
+      ui.stageSelect.dataset.preserveSelection = "true";
+    });
+    ui.stageSelect.addEventListener("change", () => {
+      ui.stageSelect.dataset.preserveSelection = "true";
+    });
+    ui.stageSelect.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (document.activeElement !== ui.stageJumpBtn) {
+          ui.stageSelect.dataset.preserveSelection = "";
+        }
+      }, 160);
+    });
     ui.stageJumpBtn.addEventListener("click", jumpToSelectedStage);
     ui.nextBtn.addEventListener("click", nextStage);
     ui.farmBtn.addEventListener("click", farmStage);
