@@ -222,6 +222,17 @@
       font-size: 14px;
     }
 
+    .best-stage-btn {
+      position: absolute;
+      left: 50%;
+      top: 72px;
+      transform: translateX(-50%);
+      min-height: 34px;
+      padding: 6px 14px;
+      z-index: 4;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.26);
+    }
+
     .shop {
       display: grid;
       grid-template-rows: auto auto auto minmax(0, 1fr) auto;
@@ -441,25 +452,6 @@
       white-space: nowrap;
     }
 
-    .stage-select-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .stage-select-row select {
-      min-width: 0;
-      height: 36px;
-      padding: 0 10px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.20);
-      color: var(--text);
-      border-radius: 8px;
-      font-weight: 800;
-      outline: none;
-    }
-
     .upgrade-title span:last-child {
       color: var(--muted);
       font-size: 12px;
@@ -619,7 +611,7 @@
       .shop {
         overflow: hidden;
         grid-template-columns: minmax(260px, 0.82fr) minmax(300px, 1fr) minmax(300px, 1fr);
-        grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto auto auto minmax(0, 1fr);
         align-content: stretch;
       }
 
@@ -642,14 +634,9 @@
         grid-row: 2;
       }
 
-      .stage-panel {
-        grid-column: 1;
-        grid-row: 3;
-      }
-
       .upgrades .armory:first-child {
         grid-column: 2;
-        grid-row: 2 / 7;
+        grid-row: 2 / 6;
         grid-template-rows: auto auto minmax(0, 1fr);
         min-height: 0;
       }
@@ -660,22 +647,22 @@
 
       .upgrades .armor-armory {
         grid-column: 3;
-        grid-row: 2 / 7;
+        grid-row: 2 / 6;
         grid-template-rows: auto auto minmax(0, 1fr);
         min-height: 0;
       }
 
       .weapon-upgrade {
-        grid-row: 4;
+        grid-row: 3;
       }
 
       .health-upgrade {
-        grid-row: 5;
+        grid-row: 4;
       }
 
       .controls {
         grid-column: 1;
-        grid-row: 6;
+        grid-row: 5;
         align-self: start;
       }
 
@@ -808,6 +795,7 @@
             <span class="bar-value" id="playerHpText">0%</span>
           </div>
         </div>
+        <button id="bestStageBtn" class="btn blue best-stage-btn" type="button">최고 스테이지</button>
         <div id="stageClear" class="stage-clear">
           <strong id="clearText">스테이지 클리어</strong>
           <button id="farmBtn" class="btn" type="button">현재 단계 반복</button>
@@ -826,15 +814,6 @@
             <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.95초</strong></div>
             <div class="stat-line"><span>받는 피해 감소</span><strong id="statGuardText">0%</strong></div>
           </div>
-        </div>
-
-        <div class="stat-box stage-panel">
-          <div class="stat-head">스테이지 선택</div>
-          <div class="stage-select-row">
-            <select id="stageSelect" aria-label="이동할 스테이지"></select>
-            <button id="stageJumpBtn" class="btn blue" type="button">이동</button>
-          </div>
-          <div class="mini" id="stageSelectHint">최고 기록 이하 단계로 이동할 수 있습니다.</div>
         </div>
 
         <div class="upgrades">
@@ -918,9 +897,6 @@
       statCritText: document.getElementById("statCritText"),
       statSpeedText: document.getElementById("statSpeedText"),
       statGuardText: document.getElementById("statGuardText"),
-      stageSelect: document.getElementById("stageSelect"),
-      stageJumpBtn: document.getElementById("stageJumpBtn"),
-      stageSelectHint: document.getElementById("stageSelectHint"),
       weaponCostText: document.getElementById("weaponCostText"),
       weaponUpgradeText: document.getElementById("weaponUpgradeText"),
       trainingLevelText: document.getElementById("trainingLevelText"),
@@ -934,6 +910,7 @@
       resetBtn: document.getElementById("resetBtn"),
       farmBtn: document.getElementById("farmBtn"),
       nextBtn: document.getElementById("nextBtn"),
+      bestStageBtn: document.getElementById("bestStageBtn"),
       log: document.getElementById("log"),
       toast: document.getElementById("toast")
     };
@@ -1251,7 +1228,7 @@
     }
 
     function upgradeCostAt(level) {
-      return Math.floor(32 * Math.pow(1.26, level) * (1 + Math.max(0, level - 12) * 0.022));
+      return Math.max(1, Math.floor(32 * 0.8 * Math.pow(1.26, level) * (1 + Math.max(0, level - 12) * 0.022)));
     }
 
     function weaponCost() {
@@ -1297,12 +1274,13 @@
 
     function makeMonster() {
       const target = stageTarget();
-      const index = Math.min(state.monstersDefeated, target - 1);
-      const boss = index >= target - 1;
+      const repeatHunt = state.repeatMode;
+      const index = repeatHunt ? state.monstersDefeated % Math.max(1, target - 1) : Math.min(state.monstersDefeated, target - 1);
+      const boss = !repeatHunt && index >= target - 1;
       const type = pickMonsterType(boss);
-      const scale = monsterScale(state.stage, index);
+      const scale = monsterScale(state.stage, index) * (repeatHunt ? 0.72 : 1);
       const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
-      const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1));
+      const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1) * (repeatHunt ? 0.78 : 1));
       const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage));
       return {
         ...type,
@@ -1511,18 +1489,20 @@
       addSparks(canvas.width * 0.62, canvas.height * 0.46, "#f7c948", state.monster.boss ? 32 : 18);
       addLog(state.monster.name + " 처치. <b>" + formatNumber(reward) + " G</b> 획득.");
 
+      if (state.repeatMode) {
+        state.monster = makeMonster();
+        saveGame();
+        updateUI();
+        return;
+      }
+
       if (state.monstersDefeated >= stageTarget()) {
         state.stageCleared = true;
         state.bestStage = Math.max(state.bestStage, state.stage);
         state.playerHp = playerMaxHp();
         scheduleStageChoice();
-        if (state.repeatMode) {
-          addLog("<b>" + state.stage + "단계</b>를 클리어했습니다. 반복 모드라 같은 단계를 다시 시작합니다.");
-          showToast("스테이지 클리어 - 반복 준비");
-        } else {
-          addLog("<b>" + state.stage + "단계</b>를 클리어했습니다. 곧 다음 단계로 이동합니다.");
-          showToast("스테이지 클리어 - 자동 진행");
-        }
+        addLog("<b>" + state.stage + "단계</b>를 클리어했습니다. 곧 다음 단계로 이동합니다.");
+        showToast("스테이지 클리어 - 자동 진행");
       } else {
         state.monster = makeMonster();
       }
@@ -1570,10 +1550,7 @@
 
     function retreatAfterDefeat() {
       const oldStage = state.stage;
-      const wasRepeating = state.repeatMode;
-      if (!wasRepeating) {
-        state.stage = Math.max(1, state.stage - 1);
-      }
+      state.stage = Math.max(1, state.stage - 1);
       state.monstersDefeated = 0;
       state.stageCleared = false;
       state.repeatMode = true;
@@ -1582,10 +1559,10 @@
       state.playerHp = playerMaxHp();
       state.monster = makeMonster();
       state.lastMonsterAttack = performance.now();
-      if (wasRepeating) {
-        addLog("체력이 모두 떨어졌지만 반복 모드라 <b>" + state.stage + "단계</b>를 유지합니다.");
+      if (state.stage < oldStage) {
+        addLog("체력이 모두 떨어져 <b>" + oldStage + "단계</b>에서 <b>" + state.stage + "단계</b>로 하락했습니다. 보스 없는 반복 파밍을 시작합니다.");
       } else {
-        addLog("체력이 모두 떨어져 <b>" + oldStage + "단계</b>에서 후퇴했습니다. 이제 <b>" + state.stage + "단계</b>를 반복합니다.");
+        addLog("체력이 모두 떨어졌지만 이미 1단계입니다. 보스 없는 반복 파밍을 계속합니다.");
       }
       showToast(state.stage + "단계 반복 모드");
       saveGame();
@@ -1600,7 +1577,7 @@
     function updateClearText(now) {
       if (!state.stageCleared) return;
       const seconds = Math.max(1, Math.ceil((state.autoAdvanceAt - now) / 1000));
-      const action = state.repeatMode ? "같은 단계 반복" : "다음 단계 이동";
+      const action = state.repeatMode ? "보스 없는 반복 파밍" : "다음 단계 이동";
       ui.clearText.textContent = state.stage + "단계 클리어 - " + seconds + "초 뒤 " + action;
     }
 
@@ -1630,59 +1607,29 @@
       state.monsterAttackTimer = 0;
       state.playerHp = playerMaxHp();
       state.monster = makeMonster();
-      addLog("현재 단계 반복 모드를 시작합니다.");
+      addLog("보스 없는 반복 파밍을 시작합니다.");
       saveGame();
       updateUI();
     }
 
-    function renderStageSelect() {
-      const maxStage = Math.max(1, state.bestStage);
-      if (ui.stageSelect.dataset.maxStage !== String(maxStage)) {
-        const selectedValue = ui.stageSelect.value;
-        ui.stageSelect.innerHTML = "";
-        for (let stage = 1; stage <= maxStage; stage++) {
-          const option = document.createElement("option");
-          option.value = String(stage);
-          option.textContent = stage + " 단계";
-          ui.stageSelect.appendChild(option);
-        }
-        ui.stageSelect.dataset.maxStage = String(maxStage);
-        if (selectedValue && Number(selectedValue) <= maxStage) {
-          ui.stageSelect.value = selectedValue;
-        }
-      }
-      const shouldPreserveSelection = ui.stageSelect.dataset.preserveSelection === "true";
-      const selectedStage = Math.floor(Number(ui.stageSelect.value));
-      if (!shouldPreserveSelection || !Number.isFinite(selectedStage) || selectedStage < 1 || selectedStage > maxStage) {
-        ui.stageSelect.value = String(Math.min(state.stage, maxStage));
-      }
-      ui.stageSelectHint.textContent = "최고 기록 " + maxStage + "단계까지 이동할 수 있습니다.";
-    }
-
-    function jumpToSelectedStage() {
-      ui.stageSelect.dataset.preserveSelection = "";
-      const targetStage = Math.floor(Number(ui.stageSelect.value));
-      if (!Number.isFinite(targetStage) || targetStage < 1 || targetStage > state.bestStage) {
-        showToast("선택할 수 없는 단계입니다.");
-        renderStageSelect();
-        return;
-      }
-      if (targetStage === state.stage && !state.stageCleared) {
-        showToast("이미 " + targetStage + "단계입니다.");
+    function returnToBestStage() {
+      const targetStage = Math.max(1, state.bestStage);
+      if (state.stage === targetStage && !state.repeatMode && !state.stageCleared) {
+        showToast("이미 최고 스테이지 도전 중입니다.");
         return;
       }
 
       state.stage = targetStage;
       state.monstersDefeated = 0;
       state.stageCleared = false;
-      state.repeatMode = targetStage < state.bestStage;
+      state.repeatMode = false;
       state.autoAdvanceAt = 0;
       state.monsterAttackTimer = 0;
-      state.playerHp = Math.max(1, Math.min(state.playerHp, playerMaxHp()));
+      state.playerHp = playerMaxHp();
       state.monster = makeMonster();
       state.lastMonsterAttack = performance.now();
-      addLog("<b>" + targetStage + "단계</b>로 이동했습니다." + (state.repeatMode ? " 반복 모드로 유지됩니다." : ""));
-      showToast(targetStage + "단계 이동");
+      addLog("<b>최고 스테이지 " + targetStage + "단계</b> 도전을 다시 시작합니다.");
+      showToast("최고 스테이지 도전");
       saveGame();
       updateUI();
     }
@@ -1807,9 +1754,10 @@
       ui.attackBtn.disabled = state.stageCleared;
       ui.attackBtn.textContent = "공격";
       ui.autoBtn.textContent = state.autoSave ? "자동 저장 켜짐" : "자동 저장 꺼짐";
+      ui.bestStageBtn.disabled = state.stage === state.bestStage && !state.repeatMode && !state.stageCleared;
+      ui.bestStageBtn.textContent = "최고 스테이지 " + state.bestStage + "단계";
       renderWeaponSkins();
       renderArmorSkins();
-      renderStageSelect();
     }
 
     function baseDamageAt(level) {
@@ -3626,7 +3574,8 @@
       ctx.fillStyle = "#f2f5f7";
       ctx.font = "800 " + Math.max(16, w * 0.024) + "px Segoe UI, Malgun Gothic, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("처치 " + state.monstersDefeated + " / " + stageTarget(), w * 0.055, h * 0.82);
+      const huntText = state.repeatMode ? "반복 사냥 " + state.monstersDefeated + "마리" : "처치 " + state.monstersDefeated + " / " + stageTarget();
+      ctx.fillText(huntText, w * 0.055, h * 0.82);
       ctx.fillStyle = "#aeb8c3";
       ctx.font = "600 " + Math.max(12, w * 0.016) + "px Segoe UI, Malgun Gothic, sans-serif";
       ctx.fillText("클릭하거나 공격 버튼으로 즉시 공격", w * 0.055, h * 0.855);
@@ -3692,23 +3641,7 @@
     });
     ui.upgradeWeaponBtn.addEventListener("click", upgradeWeapon);
     ui.trainBtn.addEventListener("click", train);
-    ui.stageSelect.addEventListener("focus", () => {
-      ui.stageSelect.dataset.preserveSelection = "true";
-    });
-    ui.stageSelect.addEventListener("input", () => {
-      ui.stageSelect.dataset.preserveSelection = "true";
-    });
-    ui.stageSelect.addEventListener("change", () => {
-      ui.stageSelect.dataset.preserveSelection = "true";
-    });
-    ui.stageSelect.addEventListener("blur", () => {
-      setTimeout(() => {
-        if (document.activeElement !== ui.stageJumpBtn) {
-          ui.stageSelect.dataset.preserveSelection = "";
-        }
-      }, 160);
-    });
-    ui.stageJumpBtn.addEventListener("click", jumpToSelectedStage);
+    ui.bestStageBtn.addEventListener("click", returnToBestStage);
     ui.nextBtn.addEventListener("click", nextStage);
     ui.farmBtn.addEventListener("click", farmStage);
     ui.saveBtn.addEventListener("click", () => {
