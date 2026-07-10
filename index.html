@@ -939,6 +939,7 @@
     };
 
     const saveKey = "steel-expedition-save-v1";
+    const skinResetVersion = 2;
     const weaponTiers = [
       { level: 0, name: "낡은 검", color: "#c0c8d2", flavor: "나무 손잡이가 삐걱거리지만 첫 사냥에는 충분합니다." },
       { level: 5, name: "강철 검", color: "#b9d6ff", flavor: "묵직한 날이 몬스터의 가죽을 가릅니다." },
@@ -1333,7 +1334,7 @@
       const skin = getWeaponSkin(id);
       if (!skin) return;
       const owned = ownsWeaponSkin(id);
-      if (!owned && state.bestStage < skin.minStage) {
+      if (state.bestStage < skin.minStage) {
         showToast(skin.minStage + "단계부터 구매 가능합니다.");
         return;
       }
@@ -1361,7 +1362,7 @@
       for (const skin of weaponSkins) {
         const owned = ownsWeaponSkin(skin.id);
         const equipped = state.equippedSkin === skin.id;
-        const locked = !owned && state.bestStage < skin.minStage;
+        const locked = state.bestStage < skin.minStage;
         const button = document.createElement("button");
         button.type = "button";
         button.className = "weapon-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (locked ? " locked" : "");
@@ -1370,7 +1371,7 @@
         button.style.setProperty("--weapon-color", "linear-gradient(135deg, " + skin.color + ", " + skin.accent + ")");
         button.style.setProperty("--weapon-glow", skin.accent);
 
-        const stateText = equipped ? "장착중" : owned ? "장착" : locked ? skin.minStage + "단계" : formatNumber(skin.cost) + " G";
+        const stateText = locked ? skin.minStage + "단계" : equipped ? "장착중" : owned ? "장착" : formatNumber(skin.cost) + " G";
         const bonusText = "+" + formatNumber(skin.damageBonus) + " 공격 / 치명 " + Math.round(skin.critBonus * 100) + "% / 공속 " + (attackSpeedForSkin(skin) / 1000).toFixed(2) + "초";
         button.innerHTML =
           '<span class="weapon-swatch"></span>' +
@@ -1386,7 +1387,7 @@
       const skin = getArmorSkin(id);
       if (!skin) return;
       const owned = ownsArmorSkin(id);
-      if (!owned && state.bestStage < skin.minStage) {
+      if (state.bestStage < skin.minStage) {
         showToast(skin.minStage + "단계부터 구매 가능합니다.");
         return;
       }
@@ -1414,7 +1415,7 @@
       for (const skin of armorSkins) {
         const owned = ownsArmorSkin(skin.id);
         const equipped = state.equippedArmor === skin.id;
-        const locked = !owned && state.bestStage < skin.minStage;
+        const locked = state.bestStage < skin.minStage;
         const button = document.createElement("button");
         button.type = "button";
         button.className = "weapon-card armor-card" + (owned ? " owned" : "") + (equipped ? " equipped" : "") + (locked ? " locked" : "");
@@ -1423,7 +1424,7 @@
         button.style.setProperty("--weapon-color", "linear-gradient(135deg, " + skin.color + ", " + skin.accent + ")");
         button.style.setProperty("--weapon-glow", skin.accent);
 
-        const stateText = equipped ? "장착중" : owned ? "장착" : locked ? skin.minStage + "단계" : formatNumber(skin.cost) + " G";
+        const stateText = locked ? skin.minStage + "단계" : equipped ? "장착중" : owned ? "장착" : formatNumber(skin.cost) + " G";
         const bonusText = "받는 피해 감소 " + Math.round(skin.guardBonus * 100) + "%";
         button.innerHTML =
           '<span class="weapon-swatch"></span>' +
@@ -1687,6 +1688,7 @@
         stageCleared: state.stageCleared,
         repeatMode: state.repeatMode,
         autoSave: state.autoSave,
+        skinResetVersion,
         equippedSkin: state.equippedSkin,
         ownedSkins: state.ownedSkins,
         equippedArmor: state.equippedArmor,
@@ -1712,15 +1714,27 @@
         state.stageCleared = Boolean(data.stageCleared);
         state.repeatMode = Boolean(data.repeatMode);
         state.autoSave = data.autoSave !== false;
-        state.ownedSkins = normalizeOwnedWeaponSkins(data.ownedSkins);
-        const equippedSkin = normalizeWeaponSkinId(data.equippedSkin);
-        state.equippedSkin = weaponSkins.some(skin => skin.id === equippedSkin) && state.ownedSkins.includes(equippedSkin)
-          ? equippedSkin
-          : weaponSkins[0].id;
-        state.ownedArmors = normalizeOwnedArmorSkins(data.ownedArmors);
-        state.equippedArmor = armorSkins.some(skin => skin.id === data.equippedArmor) && state.ownedArmors.includes(data.equippedArmor)
-          ? data.equippedArmor
-          : armorSkins[0].id;
+        let migratedSkins = false;
+        if (Number(data.skinResetVersion) !== skinResetVersion) {
+          state.ownedSkins = [weaponSkins[0].id];
+          state.equippedSkin = weaponSkins[0].id;
+          state.ownedArmors = [armorSkins[0].id];
+          state.equippedArmor = armorSkins[0].id;
+          migratedSkins = true;
+        } else {
+          state.ownedSkins = normalizeOwnedWeaponSkins(data.ownedSkins).filter(id => getWeaponSkin(id).minStage <= state.bestStage);
+          if (!state.ownedSkins.includes(weaponSkins[0].id)) state.ownedSkins.unshift(weaponSkins[0].id);
+          const equippedSkin = normalizeWeaponSkinId(data.equippedSkin);
+          state.equippedSkin = weaponSkins.some(skin => skin.id === equippedSkin && skin.minStage <= state.bestStage) && state.ownedSkins.includes(equippedSkin)
+            ? equippedSkin
+            : weaponSkins[0].id;
+          state.ownedArmors = normalizeOwnedArmorSkins(data.ownedArmors).filter(id => getArmorSkin(id).minStage <= state.bestStage);
+          if (!state.ownedArmors.includes(armorSkins[0].id)) state.ownedArmors.unshift(armorSkins[0].id);
+          state.equippedArmor = armorSkins.some(skin => skin.id === data.equippedArmor && skin.minStage <= state.bestStage) && state.ownedArmors.includes(data.equippedArmor)
+            ? data.equippedArmor
+            : armorSkins[0].id;
+        }
+        if (migratedSkins) saveGame();
         return true;
       } catch (error) {
         return false;
