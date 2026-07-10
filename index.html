@@ -238,6 +238,7 @@
     }
 
     .weapon-box,
+    .armor-box,
     .stat-box {
       padding: 9px;
       border: 1px solid var(--line);
@@ -245,6 +246,12 @@
       border-radius: 8px;
       display: grid;
       gap: 6px;
+    }
+
+    .armor-box {
+      background:
+        linear-gradient(135deg, rgba(98,216,146,0.08), transparent 45%),
+        var(--panel-2);
     }
 
     .stat-head {
@@ -482,6 +489,10 @@
       gap: 8px;
     }
 
+    .controls .btn {
+      white-space: nowrap;
+    }
+
     .btn {
       min-height: 36px;
       padding: 7px 10px;
@@ -631,6 +642,7 @@
 
       .upgrades {
         grid-column: 1 / -1;
+        grid-row: 4;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr);
         grid-template-rows: auto auto minmax(0, 1fr);
@@ -649,10 +661,24 @@
 
       .weapon-box {
         grid-column: 1;
+        grid-row: 2 / 4;
+        align-content: space-between;
       }
 
-      .shop > .stat-box {
+      .armor-box {
+        grid-column: 3;
+        grid-row: 2 / 4;
+        align-content: space-between;
+      }
+
+      .stat-panel {
         grid-column: 2;
+        grid-row: 2;
+      }
+
+      .stage-panel {
+        grid-column: 2;
+        grid-row: 3;
       }
 
       .upgrades .armory:first-child {
@@ -675,6 +701,7 @@
 
       .controls {
         grid-column: 2;
+        grid-row: 5;
       }
 
       .log-panel {
@@ -824,7 +851,7 @@
           <div class="mini" id="weaponStats">치명타 5% / 자동공격 0.95초</div>
         </div>
 
-        <div class="stat-box">
+        <div class="stat-box stat-panel">
           <div class="stat-head">스탯</div>
           <div class="stat-lines">
             <div class="stat-line"><span>최대 체력</span><strong id="statHpText">160</strong></div>
@@ -835,13 +862,22 @@
           </div>
         </div>
 
-        <div class="stat-box">
+        <div class="stat-box stage-panel">
           <div class="stat-head">스테이지 선택</div>
           <div class="stage-select-row">
             <select id="stageSelect" aria-label="이동할 스테이지"></select>
             <button id="stageJumpBtn" class="btn blue" type="button">이동</button>
           </div>
           <div class="mini" id="stageSelectHint">최고 기록 이하 단계로 이동할 수 있습니다.</div>
+        </div>
+
+        <div class="armor-box">
+          <div class="weapon-name">
+            <span id="armorNameText">낡은 가죽 갑옷</span>
+            <span id="armorGuardText">0%</span>
+          </div>
+          <div class="mini" id="armorFlavor">보호막이 안정되어 받는 피해를 줄입니다.</div>
+          <div class="mini" id="armorStats">받는 피해 감소 0%</div>
         </div>
 
         <div class="upgrades">
@@ -917,6 +953,10 @@
       weaponLevelText: document.getElementById("weaponLevelText"),
       weaponFlavor: document.getElementById("weaponFlavor"),
       weaponStats: document.getElementById("weaponStats"),
+      armorNameText: document.getElementById("armorNameText"),
+      armorGuardText: document.getElementById("armorGuardText"),
+      armorFlavor: document.getElementById("armorFlavor"),
+      armorStats: document.getElementById("armorStats"),
       weaponSkinList: document.getElementById("weaponSkinList"),
       skinCountText: document.getElementById("skinCountText"),
       skinHint: document.getElementById("skinHint"),
@@ -1767,6 +1807,7 @@
 
     function updateUI() {
       const weapon = currentWeapon();
+      const armor = currentArmor();
       const maxHp = playerMaxHp();
       const monster = state.monster;
       const monsterRatio = monster ? monster.hp / monster.maxHp : 0;
@@ -1792,6 +1833,11 @@
       ui.weaponUpgradeLevelText.textContent = "+" + state.weaponLevel;
       ui.weaponFlavor.textContent = weapon.flavor + " / 강화 계열: " + weapon.tierName;
       ui.weaponStats.textContent = "보너스 공격 +" + formatNumber(weapon.damageBonus || 0) + " / 치명타 " + Math.round(critChance() * 100) + "% / 자동공격 " + (attackSpeed() / 1000).toFixed(2) + "초";
+      ui.armorNameText.textContent = armor.name;
+      ui.armorNameText.style.color = armor.accent || armor.color;
+      ui.armorGuardText.textContent = Math.round(damageReduction() * 100) + "%";
+      ui.armorFlavor.textContent = armor.flavor;
+      ui.armorStats.textContent = "받는 피해 감소 " + Math.round(damageReduction() * 100) + "%";
       ui.statHpText.textContent = formatNumber(maxHp);
       ui.statDamageText.textContent = formatNumber(baseDamage());
       ui.statCritText.textContent = Math.round(critChance() * 100) + "%";
