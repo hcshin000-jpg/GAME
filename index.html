@@ -590,12 +590,13 @@
       .shell {
         height: 100vh;
         min-height: 0;
-        grid-template-columns: minmax(0, 1fr) 300px;
-        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
         grid-template-areas:
-          "header header"
-          "stats stats"
-          "game log";
+          "header"
+          "stats"
+          "game"
+          "log";
       }
 
       header {
@@ -608,7 +609,7 @@
 
       .game {
         grid-area: game;
-        grid-template-columns: minmax(620px, 1fr) clamp(380px, 24vw, 460px);
+        grid-template-columns: minmax(560px, 0.9fr) minmax(760px, 1.1fr);
         min-height: 0;
         height: 100%;
       }
@@ -623,24 +624,74 @@
 
       .shop {
         overflow: hidden;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+        grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+        align-content: stretch;
       }
 
       .upgrades {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
         min-height: 0;
+        overflow: hidden;
       }
 
       .armory-grid {
-        max-height: clamp(132px, 18vh, 210px);
+        max-height: none;
+        min-height: 0;
+      }
+
+      .shop h2 {
+        grid-column: 1 / -1;
+      }
+
+      .weapon-box {
+        grid-column: 1;
+      }
+
+      .shop > .stat-box {
+        grid-column: 2;
+      }
+
+      .upgrades .armory:first-child {
+        grid-column: 1;
+        grid-row: 1 / -1;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .upgrades .upgrade:not(.armory) {
+        grid-column: 2;
+      }
+
+      .upgrades .armor-armory {
+        grid-column: 3;
+        grid-row: 1 / -1;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .controls {
+        grid-column: 2;
       }
 
       .log-panel {
         grid-area: log;
         min-width: 0;
-        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        padding: 6px 8px;
+      }
+
+      .log-panel h2 {
+        font-size: 14px;
+        white-space: nowrap;
       }
 
       .log {
-        height: auto;
+        height: 42px;
         min-height: 0;
       }
     }
@@ -648,11 +699,10 @@
     @media (min-width: 1600px) and (min-height: 700px) {
       .shell {
         width: min(1880px, calc(100vw - 32px));
-        grid-template-columns: minmax(0, 1fr) 330px;
       }
 
       .game {
-        grid-template-columns: minmax(760px, 1fr) clamp(420px, 23vw, 500px);
+        grid-template-columns: minmax(680px, 0.9fr) minmax(900px, 1.1fr);
       }
     }
 
