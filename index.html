@@ -1093,7 +1093,6 @@
     const UPGRADE_COST_FACTOR = 0.25;
     const PREVIOUS_UPGRADE_COST_FACTOR = 0.5;
     const BASE_ATTACK_SPEED_MS = 500;
-    const ATTACK_SPEED_PER_WEAPON_LEVEL_MS = 10;
     const MIN_ATTACK_SPEED_MS = 100;
     const GOLD_REWARD_FACTOR = 4;
 
@@ -1206,7 +1205,7 @@
     }
 
     function attackSpeedForSkin(skin) {
-      return Math.max(MIN_ATTACK_SPEED_MS, BASE_ATTACK_SPEED_MS - state.weaponLevel * ATTACK_SPEED_PER_WEAPON_LEVEL_MS - (skin.speedBonus || 0));
+      return Math.max(MIN_ATTACK_SPEED_MS, BASE_ATTACK_SPEED_MS - (skin.speedBonus || 0));
     }
 
     function attackSpeed() {
@@ -1358,7 +1357,7 @@
     }
 
     function renderWeaponSkins() {
-      const renderKey = state.bestStage + "|" + state.weaponLevel + "|" + state.equippedSkin + "|" + state.ownedSkins.join(",");
+      const renderKey = state.bestStage + "|" + state.equippedSkin + "|" + state.ownedSkins.join(",");
       if (renderWeaponSkins.renderKey === renderKey) return;
       renderWeaponSkins.renderKey = renderKey;
       ui.weaponSkinList.innerHTML = "";
@@ -1774,7 +1773,7 @@
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
       const nextDamage = baseDamageAt(state.weaponLevel + 1);
       const nextHp = playerMaxHpAt(state.training + 1);
-      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ", 공격속도 -0.01초. 치명타와 추가 공격속도는 무기 스킨에서 상승합니다.";
+      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ". 치명타와 공격속도는 무기 스킨에서 상승합니다.";
       ui.trainText.textContent = "체력 +" + formatNumber(nextHp - maxHp) + ". 현재 체력은 유지됩니다.";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
