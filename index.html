@@ -925,6 +925,8 @@
       { level: 30, name: "용왕의 칼날", color: "#d7b4ff", flavor: "오래된 왕국의 무기. 공격마다 폭발이 일어납니다." }
     ];
 
+    const SKIN_COST_FACTOR = 10;
+
     const weaponSkinNames = [
       "훈련용 검", "청동 사냥검", "늑대 송곳창", "초승달 장궁", "붉은 전투도끼",
       "은빛 쌍검", "비전 지팡이", "흑요석 낫", "기계식 총검", "별가루 대검",
@@ -972,7 +974,7 @@
         id: "weapon_skin_" + String(index + 1).padStart(2, "0"),
         kind,
         name,
-        cost: index === 0 ? 0 : Math.floor(360 * Math.pow(1.145, index) * (1 + index * 0.028)),
+        cost: index === 0 ? 0 : Math.floor(360 * SKIN_COST_FACTOR * Math.pow(1.145, index) * (1 + index * 0.028)),
         minStage: index === 0 ? 1 : index * 5,
         color: palette[0],
         accent: palette[1],
@@ -1030,7 +1032,7 @@
       return {
         id: "armor_skin_" + String(index + 1).padStart(2, "0"),
         name,
-        cost: index === 0 ? 0 : Math.floor(330 * Math.pow(1.14, index) * (1 + index * 0.026)),
+        cost: index === 0 ? 0 : Math.floor(330 * SKIN_COST_FACTOR * Math.pow(1.14, index) * (1 + index * 0.026)),
         minStage: index === 0 ? 1 : index * 5,
         color: palette[0],
         accent: palette[1],
@@ -1095,7 +1097,6 @@
     const BASE_ATTACK_SPEED_MS = 500;
     const MIN_ATTACK_SPEED_MS = 100;
     const GOLD_REWARD_FACTOR = 4;
-
     const state = {
       balanceVersion: BALANCE_VERSION,
       balanceRefund: 0,
@@ -1133,10 +1134,19 @@
     };
 
     function formatNumber(value) {
-      if (value >= 1000000000) return (value / 1000000000).toFixed(1) + "B";
-      if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
-      if (value >= 10000) return Math.floor(value).toLocaleString("ko-KR");
-      return Math.floor(value).toString();
+      const number = Math.floor(Number(value) || 0);
+      const units = [
+        { value: 1000000000000000000, suffix: "Qi" },
+        { value: 1000000000000000, suffix: "Qa" },
+        { value: 1000000000000, suffix: "T" },
+        { value: 1000000000, suffix: "B" },
+        { value: 1000000, suffix: "M" }
+      ];
+      for (const unit of units) {
+        if (number >= unit.value) return (number / unit.value).toFixed(1) + unit.suffix;
+      }
+      if (number >= 10000) return number.toLocaleString("ko-KR");
+      return number.toString();
     }
 
     function getWeaponSkin(id = state.equippedSkin) {
@@ -1261,11 +1271,7 @@
     }
 
     function goldRewardMultiplier(stage) {
-      if (stage <= 10) return 3;
-      if (stage <= 20) return 4;
-      if (stage <= 30) return 4.8;
-      if (stage <= 40) return 5.8;
-      return Math.min(10, 5.8 + Math.floor((stage - 41) / 10) * 0.45);
+      return Math.pow(10, Math.floor(Math.max(0, stage) / 10));
     }
 
     function stageTarget() {
