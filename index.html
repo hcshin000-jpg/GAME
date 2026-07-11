@@ -1271,7 +1271,8 @@
     }
 
     function goldRewardMultiplier(stage) {
-      return Math.pow(10, Math.floor(Math.max(0, stage) / 10));
+      const tier = Math.floor(Math.max(0, stage) / 10);
+      return tier > 0 ? tier * 10 : 1;
     }
 
     function stageTarget() {
