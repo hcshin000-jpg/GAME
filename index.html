@@ -1253,7 +1253,8 @@
 
     function monsterScale(stage, index) {
       const boss = index >= stageTarget() - 1;
-      return boss ? 2.15 + stage * 0.045 : 1 + index * 0.12;
+      const lastNormalScale = 1 + Math.max(0, stageTarget() - 2) * 0.12;
+      return boss ? lastNormalScale * 2 : 1 + index * 0.12;
     }
 
     function pickMonsterType(boss) {
@@ -1281,7 +1282,7 @@
       const scale = monsterScale(state.stage, index) * (repeatHunt ? 0.72 : 1);
       const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
       const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1) * (repeatHunt ? 0.78 : 1));
-      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage));
+      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage) * 2);
       return {
         ...type,
         name: boss ? "보스 " + type.name : type.name,
