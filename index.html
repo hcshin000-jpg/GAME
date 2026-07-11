@@ -811,7 +811,7 @@
             <div class="stat-line"><span>최대 체력</span><strong id="statHpText">160</strong></div>
             <div class="stat-line"><span>공격력</span><strong id="statDamageText">13</strong></div>
             <div class="stat-line"><span>치명타</span><strong id="statCritText">5%</strong></div>
-            <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.95초</strong></div>
+            <div class="stat-line"><span>공격 속도</span><strong id="statSpeedText">0.50초</strong></div>
             <div class="stat-line"><span>받는 피해 감소</span><strong id="statGuardText">0%</strong></div>
           </div>
         </div>
@@ -978,7 +978,7 @@
         accent: palette[1],
         damageBonus: Math.floor((Math.pow(index, 1.45) * 7 + index * 4) * 2),
         critBonus: Number((0.05 + progress * 0.95).toFixed(4)),
-        speedBonus: Math.round(progress * 850),
+        speedBonus: index * 10,
         flavor: weaponSkinFlavorByKind[kind]
       };
     });
@@ -1092,6 +1092,10 @@
     const BALANCE_VERSION = 2;
     const UPGRADE_COST_FACTOR = 0.25;
     const PREVIOUS_UPGRADE_COST_FACTOR = 0.5;
+    const BASE_ATTACK_SPEED_MS = 500;
+    const ATTACK_SPEED_PER_WEAPON_LEVEL_MS = 10;
+    const MIN_ATTACK_SPEED_MS = 100;
+    const GOLD_REWARD_FACTOR = 4;
 
     const state = {
       balanceVersion: BALANCE_VERSION,
@@ -1202,7 +1206,7 @@
     }
 
     function attackSpeedForSkin(skin) {
-      return Math.max(100, 950 - (skin.speedBonus || 0));
+      return Math.max(MIN_ATTACK_SPEED_MS, BASE_ATTACK_SPEED_MS - state.weaponLevel * ATTACK_SPEED_PER_WEAPON_LEVEL_MS - (skin.speedBonus || 0));
     }
 
     function attackSpeed() {
@@ -1300,7 +1304,7 @@
       const scale = monsterScale(state.stage, index) * (repeatHunt ? 0.72 : 1);
       const maxHp = Math.floor((72 + Math.pow(state.stage, 1.58) * 34) * scale);
       const attack = Math.floor((6 + state.stage * 2.8 + Math.pow(state.stage, 1.24)) * (boss ? 1.35 : 1) * (repeatHunt ? 0.78 : 1));
-      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage) * 2);
+      const reward = Math.floor((22 + Math.pow(state.stage, 1.36) * 15) * (boss ? 2.2 : 1) * (1 + index * 0.08) * goldRewardMultiplier(state.stage) * GOLD_REWARD_FACTOR);
       return {
         ...type,
         name: boss ? "보스 " + type.name : type.name,
@@ -1354,7 +1358,7 @@
     }
 
     function renderWeaponSkins() {
-      const renderKey = state.bestStage + "|" + state.equippedSkin + "|" + state.ownedSkins.join(",");
+      const renderKey = state.bestStage + "|" + state.weaponLevel + "|" + state.equippedSkin + "|" + state.ownedSkins.join(",");
       if (renderWeaponSkins.renderKey === renderKey) return;
       renderWeaponSkins.renderKey = renderKey;
       ui.weaponSkinList.innerHTML = "";
@@ -1770,7 +1774,7 @@
       ui.trainCostText.textContent = formatNumber(trainCost()) + " G";
       const nextDamage = baseDamageAt(state.weaponLevel + 1);
       const nextHp = playerMaxHpAt(state.training + 1);
-      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ". 치명타와 공격속도는 무기 스킨에서 상승합니다.";
+      ui.weaponUpgradeText.textContent = "공격력 +" + formatNumber(Math.max(4, nextDamage - baseDamage())) + ", 공격속도 -0.01초. 치명타와 추가 공격속도는 무기 스킨에서 상승합니다.";
       ui.trainText.textContent = "체력 +" + formatNumber(nextHp - maxHp) + ". 현재 체력은 유지됩니다.";
       ui.upgradeWeaponBtn.disabled = state.gold < weaponCost();
       ui.trainBtn.disabled = state.gold < trainCost();
