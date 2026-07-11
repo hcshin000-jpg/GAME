@@ -976,7 +976,7 @@
         minStage: index === 0 ? 1 : index * 5,
         color: palette[0],
         accent: palette[1],
-        damageBonus: Math.floor(Math.pow(index, 1.45) * 7 + index * 4),
+        damageBonus: Math.floor((Math.pow(index, 1.45) * 7 + index * 4) * 2),
         critBonus: Number((0.05 + progress * 0.95).toFixed(4)),
         speedBonus: Math.round(progress * 850),
         flavor: weaponSkinFlavorByKind[kind]
@@ -1218,13 +1218,13 @@
     }
 
     function playerMaxHpAt(level) {
-      return Math.floor(160 + level * 34 + Math.pow(level, 1.22) * 8);
+      return Math.floor(160 + level * 80);
     }
 
     function baseDamage() {
       const level = state.weaponLevel;
       const weapon = getWeaponSkin();
-      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4 + (weapon.damageBonus || 0));
+      return Math.floor(13 + level * 60 + (weapon.damageBonus || 0));
     }
 
     function upgradeCostAt(level) {
@@ -1763,7 +1763,7 @@
 
     function baseDamageAt(level) {
       const weapon = getWeaponSkin();
-      return Math.floor(13 + level * 9 + Math.pow(level, 1.38) * 4 + (weapon.damageBonus || 0));
+      return Math.floor(13 + level * 60 + (weapon.damageBonus || 0));
     }
 
     function resizeCanvas() {
